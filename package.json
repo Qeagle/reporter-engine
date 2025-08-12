@@ -1,0 +1,77 @@
+{
+  "name": "reporter-engine",
+  "version": "1.0.0",
+  "description": "A modern, real-time test reporting and analytics platform for automated testing workflows",
+  "keywords": ["testing", "automation", "reporting", "analytics", "playwright", "cypress", "test-results"],
+  "author": "Qeagle <team@qeagle.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/Qeagle/reporter-engine#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Qeagle/reporter-engine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Qeagle/reporter-engine/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"vite\"",
+    "server": "node server/index.js",
+    "build": "vite build",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "preview": "vite preview",
+    "test": "echo \"Tests will be added in future versions\"",
+    "clean": "rm -rf dist node_modules/.cache",
+    "check-deps": "npm outdated",
+    "update-deps": "npm update"
+  },
+  "dependencies": {
+    "@azure/storage-blob": "^12.24.0",
+    "axios": "^1.7.9",
+    "bcryptjs": "^2.4.3",
+    "chart.js": "^4.4.6",
+    "concurrently": "^9.1.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0",
+    "html2canvas": "^1.4.1",
+    "jsonwebtoken": "^9.0.2",
+    "jspdf": "^2.5.2",
+    "lucide-react": "^0.344.0",
+    "moment": "^2.30.1",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^5.12.2",
+    "react": "^18.3.1",
+    "react-chartjs-2": "^5.2.0",
+    "react-dom": "^18.3.1",
+    "react-hot-toast": "^2.4.1",
+    "react-router-dom": "^6.28.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "uuid": "^11.0.3",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.1",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.18",
+    "eslint": "^9.9.1",
+    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "eslint-plugin-react-refresh": "^0.4.11",
+    "globals": "^15.9.0",
+    "postcss": "^8.4.35",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.3.0",
+    "vite": "^5.4.2"
+  }
+}

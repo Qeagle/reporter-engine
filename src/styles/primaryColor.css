@@ -1,0 +1,119 @@
+/* Primary color overrides using CSS custom properties */
+
+/* Define the custom properties with fallback values */
+:root {
+  --primary-color: #3B82F6;
+  --primary-rgb: 59, 130, 246;
+  --primary-50: rgba(59, 130, 246, 0.05);
+  --primary-100: rgba(59, 130, 246, 0.1);
+  --primary-200: rgba(59, 130, 246, 0.2);
+  --primary-500: #3B82F6;
+  --primary-600: #3B82F6;
+  --primary-700: rgba(47, 104, 197, 1);
+  --primary-900: rgba(18, 39, 74, 1);
+}
+
+/* Override Tailwind blue classes with primary color variables */
+* .text-blue-600,
+.text-blue-600 {
+  color: var(--primary-color) !important;
+}
+
+* .text-blue-500,
+.text-blue-500 {
+  color: var(--primary-color) !important;
+}
+
+* .text-blue-400,
+.text-blue-400 {
+  color: var(--primary-color) !important;
+}
+
+* .text-blue-700,
+.text-blue-700 {
+  color: var(--primary-700) !important;
+}
+
+* .bg-blue-600,
+.bg-blue-600 {
+  background-color: var(--primary-color) !important;
+}
+
+* .bg-blue-500,
+.bg-blue-500 {
+  background-color: var(--primary-color) !important;
+}
+
+* .bg-blue-700,
+.bg-blue-700 {
+  background-color: var(--primary-700) !important;
+}
+
+* .bg-blue-100,
+.bg-blue-100 {
+  background-color: var(--primary-100) !important;
+}
+
+* .bg-blue-900,
+.bg-blue-900 {
+  background-color: var(--primary-900) !important;
+}
+
+* .border-blue-500,
+.border-blue-500 {
+  border-color: var(--primary-color) !important;
+}
+
+* .border-blue-600,
+.border-blue-600 {
+  border-color: var(--primary-color) !important;
+}
+
+.focus\:ring-blue-500:focus {
+  --tw-ring-color: var(--primary-color) !important;
+}
+
+.focus\:border-blue-500:focus {
+  border-color: var(--primary-color) !important;
+}
+
+.hover\:text-blue-500:hover {
+  color: var(--primary-color) !important;
+}
+
+.hover\:text-blue-700:hover {
+  color: var(--primary-700) !important;
+}
+
+.hover\:text-blue-800:hover {
+  color: var(--primary-700) !important;
+}
+
+.hover\:bg-blue-700:hover {
+  background-color: var(--primary-700) !important;
+}
+
+.hover\:border-blue-700:hover {
+  border-color: var(--primary-700) !important;
+}
+
+/* Dark mode overrides */
+.dark .dark\:text-blue-400,
+.dark * .dark\:text-blue-400 {
+  color: var(--primary-color) !important;
+}
+
+.dark .dark\:text-blue-200,
+.dark * .dark\:text-blue-200 {
+  color: var(--primary-color) !important;
+}
+
+.dark .dark\:bg-blue-900,
+.dark * .dark\:bg-blue-900 {
+  background-color: var(--primary-900) !important;
+}
+
+.dark .dark\:hover\:text-blue-200:hover,
+.dark * .dark\:hover\:text-blue-200:hover {
+  color: var(--primary-color) !important;
+}

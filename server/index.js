@@ -1,0 +1,131 @@
+import dotenv from 'dotenv';
+import express from 'express';
+import http from 'http';
+import { Server as socketIo } from 'socket.io';
+import cors from 'cors';
+import helmet from 'helmet';
+import path from 'path';
+import fs from 'fs';
+
+// Load environment variables
+dotenv.config();
+
+// Import routes
+import testRoutes from './routes/testRoutes.js';
+import reportRoutes from './routes/reportRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import webhookRoutes from './routes/webhookRoutes.js';
+import projectRoutes from './routes/projectRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
+
+// Import middleware
+import authMiddleware from './middleware/authMiddleware.js';
+import errorHandler from './middleware/errorHandler.js';
+
+// Import services
+import ReportService from './services/ReportService.js';
+import WebSocketService from './services/WebSocketService.js';
+
+const app = express();
+const server = http.createServer(app);
+const io = new socketIo(server, {
+  cors: {
+    origin: [
+      process.env.CLIENT_URL || "http://localhost:5173"
+    ],
+    methods: ["GET", "POST"]
+  }
+});
+
+// Middleware
+app.use(helmet());
+app.use(cors({
+  origin: [
+    process.env.CLIENT_URL || "http://localhost:5173", 
+    "http://localhost:5174"
+  ],
+  credentials: true
+}));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Serve static files for uploads
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
+
+// Initialize services
+const reportService = new ReportService();
+const webSocketService = new WebSocketService(io);
+
+// Make services available to routes
+app.locals.reportService = reportService;
+app.locals.webSocketService = webSocketService;
+
+// Public routes
+app.use('/api/auth', authRoutes);
+app.use('/api/webhooks', webhookRoutes);
+
+// Protected routes
+app.use('/api/tests', testRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/ai', aiRoutes);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    version: '1.0.0'
+  });
+});
+
+// Error handling
+app.use(errorHandler);
+
+// WebSocket connection handling
+io.on('connection', (socket) => {
+  console.log('Client connected:', socket.id);
+  
+  socket.on('join-report', (reportId) => {
+    socket.join(`report-${reportId}`);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log('Client disconnected:', socket.id);
+  });
+});
+
+const PORT = process.env.PORT || 3001;
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Process terminated');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  server.close(() => {
+    console.log('Process terminated');
+    process.exit(0);
+  });
+});
+
+server.listen(PORT, () => {
+  console.log(`🚀 Reporter Engine server running on port ${PORT}`);
+  console.log(`📊 Dashboard: http://localhost:${PORT}`);
+  console.log(`🔗 API Health: http://localhost:${PORT}/api/health`);
+  console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+export { app, server, io };
