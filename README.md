@@ -28,6 +28,43 @@ Reporter Engine is a comprehensive test reporting solution that provides real-ti
 - **Pass/Fail Trends** - Visual representation of test health
 - **Duration Metrics** - Performance analysis and optimization insights
 
+### � Trend Analysis (New!)
+- **Historical Pass/Fail Analysis** - Comprehensive trend visualization over multiple time periods
+- **Flexible Time Ranges** - Analyze data across 7 days, 30 days, 90 days, 6 months, or 1 year
+- **Multiple Grouping Options** - View trends by day, week, or month aggregation
+- **Advanced Filtering** - Filter by project, test suite, environment, and branch
+- **Interactive Charts** - Professional Chart.js visualizations including:
+  - Pass/Fail trend lines showing test execution health over time
+  - Pass rate percentage trends with area charts
+  - Execution duration analysis with bar charts
+- **Summary Metrics** - Key performance indicators including total runs, pass rates, average duration, and failure counts
+- **Test Suite Performance** - Compare trends across different test suites
+- **Environment Comparison** - Track stability across staging, production, and other environments
+- **Flaky Test Detection** - Identify tests with inconsistent pass/fail patterns
+
+### 🔬 Failure Analysis
+- **Intelligent Classification** - Automatically categorize failures into:
+  - Application Defects
+  - Test Data Issues
+  - Automation Script Errors
+  - Environment Issues
+  - Unknown/Unclassified
+- **Manual Reclassification** - Override automatic classifications with manual input
+- **Multiple Time Windows** - Analyze failures across 1 hour, 8 hours, 1 day, 7 days, 30 days, 60 days, 90 days, or custom ranges
+- **Persistent Classifications** - Manual classifications are stored and prioritized over automatic ones
+- **Real-time Summary Updates** - Summary cards update immediately after reclassification
+- **Multi-View Analysis**:
+  - **Test Case View** - Individual test failures with classification details
+  - **Suite/Run View** - Aggregated failure counts by test suite and run
+  - **Groups View** - Deduplicated failure groups by error signature
+
+### 👥 User Management (New!)
+- **User Invitations** - Invite users via email with role-based access
+- **Project-based Access** - Assign users to specific projects with appropriate roles
+- **Invitation Management** - Track, resend, and revoke invitations
+- **Email Notifications** - Automatic invitation emails with secure tokens
+- **Self-registration** - Users can accept invitations and create their own accounts
+
 ### 🔧 Developer Experience
 - **WebSocket Integration** - Real-time updates without refresh
 - **RESTful APIs** - Complete programmatic access
@@ -162,6 +199,71 @@ Content-Type: application/json
     "skipped": 0,
     "duration": 120000
   }
+}
+```
+
+### Failure Analysis Usage
+
+#### Analyze Test Failures
+The new failure analysis feature provides intelligent classification of test failures:
+
+```bash
+# Get failure analysis summary
+GET /api/analysis/projects/{projectId}/summary?timeWindow=30
+
+# Get classified test case failures
+GET /api/analysis/projects/{projectId}/test-cases?timeWindow=7
+
+# Get suite-level failure aggregation
+GET /api/analysis/projects/{projectId}/suite-runs?timeWindow=1d
+
+# Get deduplicated failure groups
+GET /api/analysis/projects/{projectId}/groups?timeWindow=8h
+```
+
+#### Reclassify Failures
+```bash
+POST /api/analysis/test-cases/{testCaseId}/reclassify
+Content-Type: application/json
+
+{
+  "primaryClass": "Application Defect",
+  "subClass": "Logic Error"
+}
+```
+
+#### Time Windows Supported
+- `1h` - Last 1 hour
+- `8h` - Last 8 hours  
+- `1d` - Last 1 day
+- `7` - Last 7 days
+- `30` - Last 30 days
+- `60` - Last 60 days
+- `90` - Last 90 days
+- `custom` - Custom date range
+
+### User Management
+
+#### Create User Invitations
+```bash
+POST /api/invitations/create
+Content-Type: application/json
+
+{
+  "email": "user@company.com",
+  "projectId": 123,
+  "projectRoleId": 2
+}
+```
+
+#### Accept Invitation
+```bash
+POST /api/invitations/{token}/accept
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "password": "securepassword"
 }
 ```
 
@@ -319,6 +421,15 @@ Full API documentation is available at `/api/docs` when running the server.
 | `POST` | `/api/tests/complete` | Complete execution |
 | `GET` | `/api/reports` | List reports |
 | `GET` | `/api/reports/:id` | Get report details |
+| `GET` | `/api/analysis/projects/:id/summary` | Get failure analysis summary |
+| `GET` | `/api/analysis/projects/:id/test-cases` | Get classified test failures |
+| `GET` | `/api/analysis/projects/:id/suite-runs` | Get suite-level failure analysis |
+| `GET` | `/api/analysis/projects/:id/groups` | Get deduplicated failure groups |
+| `POST` | `/api/analysis/test-cases/:id/reclassify` | Manually reclassify a failure |
+| `POST` | `/api/invitations/create` | Create user invitation |
+| `GET` | `/api/invitations/list` | List invitations |
+| `POST` | `/api/invitations/:token/accept` | Accept invitation |
+| `POST` | `/api/invitations/:id/revoke` | Revoke invitation |
 
 ## 🔒 Security
 
