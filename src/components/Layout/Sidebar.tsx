@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, FileText, Settings, ChevronLeft, ChevronRight } from 'lucide-react';
+import { BarChart3, FileText, Settings, ChevronLeft, ChevronRight, Bug, TrendingUp } from 'lucide-react';
 import { useSettings } from '../../contexts/SettingsContext';
 import { usePrimaryColor } from '../../hooks/usePrimaryColor';
 import Analytics360Icon from '../Brand/Analytics360Icon';
@@ -19,6 +19,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, onToggle, onColl
   const navigation = [
     { name: 'Dashboard', href: '/', icon: BarChart3 },
     { name: 'Reports', href: '/reports', icon: FileText },
+    { name: 'Failure Analysis', href: '/defects', icon: Bug },
+    { name: 'Trend Analysis', href: '/trends', icon: TrendingUp },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 

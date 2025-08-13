@@ -10,8 +10,11 @@ import Layout from './components/Layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Reports from './pages/Reports';
 import ReportDetails from './pages/ReportDetails';
+import FailureAnalysis from './pages/FailureAnalysis';
+import TrendAnalysis from './pages/TrendAnalysis';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
+import AcceptInvitation from './pages/AcceptInvitation';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 
 function App() {
@@ -25,6 +28,7 @@ function App() {
               <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
                 <Routes>
                   <Route path="/login" element={<Login />} />
+                  <Route path="/accept-invitation/:token" element={<AcceptInvitation />} />
                   <Route path="/" element={
                     <ProtectedRoute>
                       <Layout>
@@ -43,6 +47,20 @@ function App() {
                     <ProtectedRoute>
                       <Layout>
                         <ReportDetails />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/defects" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <FailureAnalysis />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/trends" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <TrendAnalysis />
                       </Layout>
                     </ProtectedRoute>
                   } />
