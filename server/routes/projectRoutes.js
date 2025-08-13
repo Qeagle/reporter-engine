@@ -1,21 +1,35 @@
 import express from 'express';
-import projectController from '../controllers/ProjectController.js';
+import ProjectController from '../controllers/ProjectController.js';
+import authMiddleware from '../middleware/authMiddleware.js';
+import { 
+  requireProjectPermission, 
+  filterByProjectAccess, 
+  addUserPermissions 
+} from '../middleware/rbacMiddleware.js';
 
 const router = express.Router();
+const projectController = new ProjectController();
 
-// Get all projects
-router.get('/', projectController.getAllProjects.bind(projectController));
+// Get all projects (filtered by user access)
+router.get('/', authMiddleware, filterByProjectAccess(), projectController.getAllProjects.bind(projectController));
 
-// Get specific project
-router.get('/:projectId', projectController.getProjectById.bind(projectController));
+// Get project by ID
+router.get('/:projectId', authMiddleware, projectController.getProjectById.bind(projectController));
 
 // Create new project
-router.post('/', projectController.createProject.bind(projectController));
+router.post('/', authMiddleware, addUserPermissions(), projectController.createProject.bind(projectController));
 
 // Update project
-router.put('/:projectId', projectController.updateProject.bind(projectController));
+router.put('/:projectId', authMiddleware, projectController.updateProject.bind(projectController));
+
+// Delete project
+router.delete('/:projectId', authMiddleware, projectController.deleteProject.bind(projectController));
 
 // Get project statistics
-router.get('/:projectId/stats', projectController.getProjectStats.bind(projectController));
+router.get('/:projectId/stats', authMiddleware, projectController.getProjectStats.bind(projectController));
+
+// Project member management
+router.get('/:projectId/members', authMiddleware, projectController.getProjectMembers.bind(projectController));
+router.post('/:projectId/members', authMiddleware, projectController.addProjectMember.bind(projectController));
 
 export default router;

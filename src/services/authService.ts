@@ -31,9 +31,10 @@ class AuthService {
     });
   }
 
-  async login(username: string, password: string): Promise<LoginResponse> {
+  async login(email: string, password: string): Promise<LoginResponse> {
     try {
-      const response = await this.api.post('/login', { username, password });
+      // Note: Backend expects 'username' field, not 'email'
+      const response = await this.api.post('/login', { username: email, password });
       if (response.data.success) {
         return response.data;
       }

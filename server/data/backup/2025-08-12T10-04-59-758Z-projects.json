@@ -1,0 +1,28 @@
+[
+  {
+    "id": "playwright-salesforce-default",
+    "name": "Salesforce Playwright Tests",
+    "description": "Automated testing suite for Salesforce CRM platform using Playwright Typescript framework",
+    "type": "playwright",
+    "status": "active",
+    "createdAt": "2024-01-15T10:00:00.000Z",
+    "settings": {
+      "retentionDays": 30,
+      "autoCleanup": true,
+      "notifications": true
+    }
+  },
+  {
+    "id": "selenium-leaftaps",
+    "name": "LeafTaps Selenium Tests",
+    "description": "Automated testing suite for Leaftaps CRM platform using Selenium Java framework",
+    "type": "selenium",
+    "status": "active",
+    "createdAt": "2025-08-10T04:51:02.931Z",
+    "settings": {
+      "retentionDays": 30,
+      "autoCleanup": true,
+      "notifications": true
+    }
+  }
+]

@@ -5,7 +5,7 @@ interface User {
   id: string;
   username: string;
   email: string;
-  role: 'admin' | 'developer' | 'viewer';
+  role: string;
 }
 
 interface AuthState {
@@ -16,9 +16,9 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  login: (username: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  register: (username: string, email: string, password: string) => Promise<void>;
+  register: (email: string, password: string) => Promise<void>;
   isAuthenticated: boolean;
   hasRole: (role: string) => boolean;
 }
@@ -67,7 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [state, dispatch] = useReducer(authReducer, {
     user: null,
     token: localStorage.getItem('token'),
-    loading: false,
+    loading: true, // Start with loading true to prevent flash
     error: null
   });
 
@@ -80,20 +80,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const user = await authService.getProfile();
           dispatch({ type: 'LOGIN_SUCCESS', payload: { user, token } });
         } catch (error) {
+          // Clear invalid token from localStorage
+          console.warn('Token validation failed, clearing authentication:', error);
+          localStorage.removeItem('token');
           dispatch({ type: 'LOGOUT' });
         } finally {
           dispatch({ type: 'SET_LOADING', payload: false });
         }
+      } else {
+        // No token found, ensure loading is false
+        dispatch({ type: 'SET_LOADING', payload: false });
       }
     };
 
     initAuth();
   }, []);
 
-  const login = async (username: string, password: string) => {
+  const login = async (email: string, password: string) => {
     dispatch({ type: 'LOGIN_START' });
     try {
-      const response = await authService.login(username, password);
+      const response = await authService.login(email, password);
       dispatch({ type: 'LOGIN_SUCCESS', payload: response });
     } catch (error: any) {
       dispatch({ type: 'LOGIN_FAILURE', payload: error.message });
@@ -101,10 +107,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (username: string, email: string, password: string) => {
+  const register = async (email: string, password: string) => {
     dispatch({ type: 'REGISTER_START' });
     try {
-      const response = await authService.register(username, email, password);
+      // Use email as username for simplicity in development
+      const response = await authService.register(email, email, password);
       dispatch({ type: 'REGISTER_SUCCESS', payload: response });
     } catch (error: any) {
       dispatch({ type: 'REGISTER_FAILURE', payload: error.message });

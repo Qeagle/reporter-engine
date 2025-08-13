@@ -1,0 +1,102 @@
+{
+  "id": "b10a7f92-0f41-4c0b-bbba-f010587eb886",
+  "testSuite": "Salesforce E2E Tests",
+  "environment": "development",
+  "framework": "Playwright",
+  "tags": [
+    "salesforce",
+    "e2e",
+    "playwright",
+    "automation"
+  ],
+  "metadata": {
+    "browser": "Salesfe",
+    "parallel": true,
+    "workers": 4,
+    "version": "1.0.0"
+  },
+  "status": "completed",
+  "startTime": "2025-08-09T07:49:05.532Z",
+  "tests": [
+    {
+      "name": "Salesfe › smoke/createlead.spec.ts › Create a lead with random details and verify toast message",
+      "status": "failed",
+      "duration": 890,
+      "startTime": "2025-08-09T07:49:07.550Z",
+      "endTime": "2025-08-09T07:49:08.440Z",
+      "errorMessage": "TypeError: testReportHelper.addCustomStep is not a function",
+      "stackTrace": "TypeError: testReportHelper.addCustomStep is not a function\n    at Object.page (/Users/babu/Desktop/playwright-salesforce/support/reporting-plugin.ts:102:30)",
+      "steps": [
+        {
+          "name": "Before Hooks",
+          "status": "failed",
+          "duration": 2189,
+          "error": "TypeError: testReportHelper.addCustomStep is not a function",
+          "category": "hook",
+          "order": 1
+        },
+        {
+          "name": "After Hooks",
+          "status": "passed",
+          "duration": 198,
+          "error": null,
+          "category": "hook",
+          "order": 2
+        },
+        {
+          "name": "Worker Cleanup",
+          "status": "passed",
+          "duration": 193,
+          "error": null,
+          "category": "hook",
+          "order": 3
+        }
+      ],
+      "artifacts": [
+        {
+          "id": "c130f32d-d6eb-46e9-8e0a-1bf8741d62e5",
+          "type": "screenshot",
+          "filename": "test-failed-1.png",
+          "url": "http://localhost:3001/api/tests/artifacts/a8c7d743-a3e1-4ba1-a6e0-34228e6a82e8-test-failed-1.png",
+          "uploadedAt": "2025-08-09T07:49:08.463Z"
+        },
+        {
+          "id": "28011ead-27c2-446c-9894-cc3f111b69be",
+          "type": "video",
+          "filename": "video.webm",
+          "url": "http://localhost:3001/api/tests/artifacts/ad1d0b70-3c60-45c3-8ce8-4727f40dfa9c-video.webm",
+          "uploadedAt": "2025-08-09T07:49:08.466Z"
+        },
+        {
+          "id": "994c5e18-8eed-4802-877f-05d68ee723b7",
+          "type": "trace",
+          "filename": "trace.zip",
+          "url": "http://localhost:3001/api/tests/artifacts/e5e59ce3-b343-4564-8fc1-a6ca138fa9b1-trace.zip",
+          "uploadedAt": "2025-08-09T07:49:08.470Z"
+        }
+      ],
+      "annotations": [],
+      "metadata": {
+        "file": "/Users/babu/Desktop/playwright-salesforce/tests/smoke/createlead.spec.ts",
+        "line": 10,
+        "column": 5,
+        "retries": 0,
+        "parallelIndex": 0
+      }
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "duration": 3015,
+    "passRate": 0,
+    "startTime": "2025-08-09T07:49:05.505Z",
+    "endTime": "2025-08-09T07:49:08.547Z"
+  },
+  "endTime": "2025-08-09T07:49:08.547Z",
+  "projectId": "playwright-salesforce-default",
+  "projectName": "Salesforce Playwright Tests",
+  "projectType": "playwright"
+}

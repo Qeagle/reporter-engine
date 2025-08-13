@@ -1,0 +1,63 @@
+{
+  "id": "3ed38b26-3a2d-4a11-9dd7-484af06f3a40",
+  "testSuite": "LeafTaps Test Suite",
+  "environment": "local",
+  "framework": "testng-selenium",
+  "tags": [
+    "smoke",
+    "regression"
+  ],
+  "metadata": {
+    "author": "LeafTaps Framework",
+    "browser": "chrome",
+    "version": "1.0.0"
+  },
+  "projectId": "selenium-leaftaps",
+  "projectName": "LeafTaps Selenium Tests",
+  "projectType": "selenium",
+  "status": "completed",
+  "startTime": "2025-08-10T04:45:13.425Z",
+  "tests": [
+    {
+      "name": "CreateLead",
+      "status": "pass",
+      "duration": 0,
+      "startTime": "2025-08-10T04:45:45.756Z",
+      "endTime": "2025-08-10T04:45:45.756Z",
+      "steps": [
+        {
+          "duration": 0,
+          "name": "Hari is matching with first name",
+          "status": "pass",
+          "timestamp": "2025-08-10T10:15:45.755435"
+        }
+      ],
+      "artifacts": []
+    },
+    {
+      "name": "runLogin",
+      "status": "pass",
+      "duration": 10284,
+      "startTime": "2025-08-10T04:45:45.757Z",
+      "endTime": "2025-08-10T04:45:45.757Z",
+      "steps": [
+        {
+          "duration": 10284,
+          "name": "Test completed successfully",
+          "status": "pass",
+          "timestamp": "2025-08-10T10:15:45.757244"
+        }
+      ],
+      "artifacts": []
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 32479,
+    "passRate": 100
+  },
+  "endTime": "2025-08-10T10:15:45.904566"
+}

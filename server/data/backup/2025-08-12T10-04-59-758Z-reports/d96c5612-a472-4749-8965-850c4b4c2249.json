@@ -1,0 +1,297 @@
+{
+  "id": "d96c5612-a472-4749-8965-850c4b4c2249",
+  "testSuite": "Login",
+  "environment": "development",
+  "framework": "Playwright",
+  "tags": [
+    "salesforce",
+    "e2e",
+    "playwright",
+    "automation"
+  ],
+  "metadata": {
+    "browser": "chromium",
+    "parallel": true,
+    "workers": 4,
+    "version": "1.0.0",
+    "projectInfo": {
+      "id": "playwright-salesforce-default",
+      "name": "Salesforce Playwright Tests",
+      "type": "playwright"
+    }
+  },
+  "projectId": "playwright-salesforce-default",
+  "projectName": "Salesforce Playwright Tests",
+  "projectType": "playwright",
+  "status": "completed",
+  "startTime": "2025-08-10T05:31:07.368Z",
+  "tests": [
+    {
+      "name": "chromium › smoke/login.spec.ts › @smoke Salesforce Login › Login with valid credentials should show App Launcher button",
+      "status": "passed",
+      "duration": 7517,
+      "startTime": "2025-08-10T05:31:08.123Z",
+      "endTime": "2025-08-10T05:31:15.640Z",
+      "errorMessage": null,
+      "stackTrace": null,
+      "steps": [
+        {
+          "name": "Before Hooks",
+          "status": "passed",
+          "duration": 3070,
+          "error": null,
+          "category": "hook",
+          "order": 1
+        },
+        {
+          "name": "Wait for selector locator('input#username')",
+          "status": "passed",
+          "duration": 11,
+          "error": null,
+          "category": "pw:api",
+          "order": 2
+        },
+        {
+          "name": "Fill \"naveen.kumar187@agentforce.com\" locator('input#username')",
+          "status": "passed",
+          "duration": 11,
+          "error": null,
+          "category": "pw:api",
+          "order": 3
+        },
+        {
+          "name": "Wait for selector locator('input#password')",
+          "status": "passed",
+          "duration": 2,
+          "error": null,
+          "category": "pw:api",
+          "order": 4
+        },
+        {
+          "name": "Fill \"Sales@123\" locator('input#password')",
+          "status": "passed",
+          "duration": 58,
+          "error": null,
+          "category": "pw:api",
+          "order": 5
+        },
+        {
+          "name": "Wait for selector locator('input#Login')",
+          "status": "passed",
+          "duration": 2,
+          "error": null,
+          "category": "pw:api",
+          "order": 6
+        },
+        {
+          "name": "Click locator('input#Login')",
+          "status": "passed",
+          "duration": 2085,
+          "error": null,
+          "category": "pw:api",
+          "order": 7
+        },
+        {
+          "name": "Is visible locator('button[title=\"App Launcher\"]')",
+          "status": "passed",
+          "duration": 22,
+          "error": null,
+          "category": "pw:api",
+          "order": 8
+        },
+        {
+          "name": "After Hooks",
+          "status": "passed",
+          "duration": 2656,
+          "error": null,
+          "category": "hook",
+          "order": 9
+        }
+      ],
+      "artifacts": [
+        {
+          "id": "d97ab9b5-dfbf-4dea-b596-c19258742f80",
+          "type": "screenshot",
+          "filename": "test-finished-1.png",
+          "url": "http://localhost:3001/api/tests/artifacts/5c95330e-0166-4d1c-9aac-929add285fb1-test-finished-1.png",
+          "uploadedAt": "2025-08-10T05:31:15.653Z"
+        },
+        {
+          "id": "041b036d-2c41-42a3-a5e5-a7ec7f5cfda5",
+          "type": "video",
+          "filename": "video.webm",
+          "url": "http://localhost:3001/api/tests/artifacts/b7ffe498-8083-4a19-9c9c-4505b7dbe975-video.webm",
+          "uploadedAt": "2025-08-10T05:31:15.657Z"
+        },
+        {
+          "id": "ac759f89-b82e-41cb-b50a-2be62e757bc9",
+          "type": "trace",
+          "filename": "trace.zip",
+          "url": "http://localhost:3001/api/tests/artifacts/9cd12ee8-6ed9-4523-af9f-407a55af6fae-trace.zip",
+          "uploadedAt": "2025-08-10T05:31:15.663Z"
+        }
+      ],
+      "annotations": [
+        {
+          "type": "author",
+          "description": "Shan"
+        }
+      ],
+      "metadata": {
+        "file": "/Users/babu/Desktop/playwright-salesforce/tests/smoke/login.spec.ts",
+        "line": 14,
+        "column": 7,
+        "retries": 0,
+        "parallelIndex": 0,
+        "author": "Shan"
+      }
+    },
+    {
+      "name": "chromium › smoke/login.spec.ts › @smoke Salesforce Login › Login with invalid credentials should show login error",
+      "status": "passed",
+      "duration": 3366,
+      "startTime": "2025-08-10T05:31:15.680Z",
+      "endTime": "2025-08-10T05:31:19.046Z",
+      "errorMessage": null,
+      "stackTrace": null,
+      "steps": [
+        {
+          "name": "Before Hooks",
+          "status": "passed",
+          "duration": 2766,
+          "error": null,
+          "category": "hook",
+          "order": 1
+        },
+        {
+          "name": "Wait for selector locator('input#username')",
+          "status": "passed",
+          "duration": 15,
+          "error": null,
+          "category": "pw:api",
+          "order": 2
+        },
+        {
+          "name": "Fill \"babu\" locator('input#username')",
+          "status": "passed",
+          "duration": 5,
+          "error": null,
+          "category": "pw:api",
+          "order": 3
+        },
+        {
+          "name": "Wait for selector locator('input#password')",
+          "status": "passed",
+          "duration": 2,
+          "error": null,
+          "category": "pw:api",
+          "order": 4
+        },
+        {
+          "name": "Fill \"wrongpass\" locator('input#password')",
+          "status": "passed",
+          "duration": 44,
+          "error": null,
+          "category": "pw:api",
+          "order": 5
+        },
+        {
+          "name": "Wait for selector locator('input#Login')",
+          "status": "passed",
+          "duration": 2,
+          "error": null,
+          "category": "pw:api",
+          "order": 6
+        },
+        {
+          "name": "Click locator('input#Login')",
+          "status": "passed",
+          "duration": 343,
+          "error": null,
+          "category": "pw:api",
+          "order": 7
+        },
+        {
+          "name": "Wait for selector locator('#error')",
+          "status": "passed",
+          "duration": 45,
+          "error": null,
+          "category": "pw:api",
+          "order": 8
+        },
+        {
+          "name": "Get text content locator('#error')",
+          "status": "passed",
+          "duration": 4,
+          "error": null,
+          "category": "pw:api",
+          "order": 9
+        },
+        {
+          "name": "toContain",
+          "status": "passed",
+          "duration": 1,
+          "error": null,
+          "category": "expect",
+          "order": 10
+        },
+        {
+          "name": "After Hooks",
+          "status": "passed",
+          "duration": 133,
+          "error": null,
+          "category": "hook",
+          "order": 11
+        }
+      ],
+      "artifacts": [
+        {
+          "id": "63fbf208-f6ef-4343-bcd8-e6c37e4654fb",
+          "type": "screenshot",
+          "filename": "test-finished-1.png",
+          "url": "http://localhost:3001/api/tests/artifacts/74963adb-2bd2-4c2e-b090-0adda6722425-test-finished-1.png",
+          "uploadedAt": "2025-08-10T05:31:19.054Z"
+        },
+        {
+          "id": "031b6665-d2e5-450f-9464-d3e87578c1e3",
+          "type": "video",
+          "filename": "video.webm",
+          "url": "http://localhost:3001/api/tests/artifacts/c6b4d052-0b80-4dad-9a0e-e0aede92fe52-video.webm",
+          "uploadedAt": "2025-08-10T05:31:19.060Z"
+        },
+        {
+          "id": "4d08e0a9-ed2e-4c5a-9ec6-51b056941dad",
+          "type": "trace",
+          "filename": "trace.zip",
+          "url": "http://localhost:3001/api/tests/artifacts/4fd2a8e3-d484-4d0b-bbc1-fe78bf354cf2-trace.zip",
+          "uploadedAt": "2025-08-10T05:31:19.067Z"
+        }
+      ],
+      "annotations": [
+        {
+          "type": "author",
+          "description": "Shan"
+        }
+      ],
+      "metadata": {
+        "file": "/Users/babu/Desktop/playwright-salesforce/tests/smoke/login.spec.ts",
+        "line": 21,
+        "column": 7,
+        "retries": 0,
+        "parallelIndex": 0,
+        "author": "Shan"
+      }
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 11778,
+    "passRate": 100,
+    "startTime": "2025-08-10T05:31:07.353Z",
+    "endTime": "2025-08-10T05:31:19.146Z"
+  },
+  "endTime": "2025-08-10T05:31:19.146Z"
+}

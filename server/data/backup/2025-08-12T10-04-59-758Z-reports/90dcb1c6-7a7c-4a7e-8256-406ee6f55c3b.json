@@ -1,0 +1,76 @@
+{
+  "id": "90dcb1c6-7a7c-4a7e-8256-406ee6f55c3b",
+  "testSuite": "LeafTaps Test Suite",
+  "environment": "local",
+  "framework": "testng-selenium",
+  "tags": [
+    "smoke",
+    "regression"
+  ],
+  "metadata": {
+    "author": "LeafTaps Framework",
+    "browser": "chrome",
+    "version": "1.0.0"
+  },
+  "projectId": "selenium-leaftaps",
+  "projectName": "LeafTaps Selenium Tests",
+  "projectType": "selenium",
+  "status": "completed",
+  "startTime": "2025-08-10T05:08:40.303Z",
+  "tests": [
+    {
+      "name": "CreateLead",
+      "status": "passed",
+      "duration": 33182,
+      "startTime": "2025-08-10T10:38:40.342261",
+      "endTime": "2025-08-10T10:39:13.524293",
+      "steps": [],
+      "artifacts": [],
+      "annotations": [],
+      "metadata": {
+        "environment": "local",
+        "browser": "chrome",
+        "projectType": "selenium",
+        "projectName": "LeafTaps Selenium Tests",
+        "projectId": "selenium-leaftaps",
+        "timestamp": "2025-08-10T10:39:13.524308"
+      }
+    },
+    {
+      "name": "runLogin",
+      "status": "passed",
+      "duration": 10697,
+      "startTime": "2025-08-10T10:39:02.668782",
+      "endTime": "2025-08-10T10:39:13.365851",
+      "steps": [
+        {
+          "id": "693bf643-053b-480f-b474-3680bd6a7078",
+          "name": "Browser is closed",
+          "status": "pass",
+          "duration": 0,
+          "timestamp": "2025-08-10T05:09:13.475Z",
+          "description": "Browser is closed"
+        }
+      ],
+      "artifacts": [],
+      "annotations": [],
+      "metadata": {
+        "environment": "local",
+        "browser": "chrome",
+        "projectType": "selenium",
+        "projectName": "LeafTaps Selenium Tests",
+        "projectId": "selenium-leaftaps",
+        "timestamp": "2025-08-10T10:39:13.365862"
+      }
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 33222,
+    "passRate": 100
+  },
+  "endTime": "2025-08-10T10:39:13.525774"
+}

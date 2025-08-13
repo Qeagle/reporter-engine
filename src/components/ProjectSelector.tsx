@@ -1,19 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, FolderOpen, Settings } from 'lucide-react';
-
-interface Project {
-  id: string;
-  name: string;
-  description: string;
-  type: string;
-  status: 'active' | 'inactive';
-  createdAt: string;
-  settings: {
-    retentionDays: number;
-    autoCleanup: boolean;
-    notifications: boolean;
-  };
-}
+import { projectService, type Project } from '../services/projectService';
 
 interface ProjectSelectorProps {
   currentProject?: Project;
@@ -38,13 +25,12 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch('/api/projects');
-      const data = await response.json();
-      setProjects(data);
+      const projectsData = await projectService.getAllProjects();
+      setProjects(projectsData);
       
       // If no current project selected, select the first active one
-      if (!currentProject && data.length > 0) {
-        const activeProject = data.find((p: Project) => p.status === 'active') || data[0];
+      if (!currentProject && projectsData.length > 0) {
+        const activeProject = projectsData.find((p: Project) => p.status === 'active') || projectsData[0];
         onProjectChange(activeProject);
       }
     } catch (error) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, MessageSquare, BarChart3, Brain } from 'lucide-react';
+import { ArrowLeft, MessageSquare, BarChart3, Brain } from 'lucide-react';
 import { reportService } from '../services/reportService';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import ReportSummary from '../components/ReportDetails/ReportSummary';
@@ -86,18 +86,6 @@ const ReportDetails: React.FC = () => {
     }
   };
 
-  const handleExportPDF = async () => {
-    if (!reportId) return;
-    
-    try {
-      await reportService.exportToPDF(reportId);
-      toast.success('Report exported successfully');
-    } catch (error) {
-      console.error('Error exporting report:', error);
-      toast.error('Failed to export report');
-    }
-  };
-
   const tabs = [
     { id: 'summary', label: 'Summary', icon: BarChart3 },
     { id: 'tests', label: 'Test Results', icon: BarChart3 },
@@ -166,18 +154,8 @@ const ReportDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Report Summary with AI Insights */}
-      <div className="space-y-4">
-        <ReportSummary report={report} />
-        {report.stats && (report.stats.failed > 0 || report.stats.errors > 0) && (
-          <RunSummaryInsights
-            reportId={reportId!}
-            totalTests={report.stats.total || 0}
-            failedTests={(report.stats.failed || 0) + (report.stats.errors || 0)}
-            onViewFullAnalysis={() => setActiveTab('ai-insights')}
-          />
-        )}
-      </div>
+      {/* Report Summary */}
+      <ReportSummary report={report} />
 
       {/* Tabs */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -204,11 +182,14 @@ const ReportDetails: React.FC = () => {
           {activeTab === 'summary' && (
             <div className="space-y-6">
               <ReportSummary report={report} />
-              <RunSummaryInsights
-                reportId={reportId!}
-                totalTests={report.stats?.total || 0}
-                failedTests={(report.stats?.failed || 0) + (report.stats?.errors || 0)}
-              />
+              {report.stats && (report.stats.failed > 0 || report.stats.errors > 0) && (
+                <RunSummaryInsights
+                  reportId={reportId!}
+                  totalTests={report.stats.total || 0}
+                  failedTests={(report.stats.failed || 0) + (report.stats.errors || 0)}
+                  onViewFullAnalysis={() => setActiveTab('ai-insights')}
+                />
+              )}
             </div>
           )}
           {activeTab === 'tests' && <TestsList tests={report.tests} />}

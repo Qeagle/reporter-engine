@@ -108,7 +108,6 @@ Thumbs.db
 
 # Test results and artifacts
 test-results/
-reports/
 screenshots/
 videos/
 traces/

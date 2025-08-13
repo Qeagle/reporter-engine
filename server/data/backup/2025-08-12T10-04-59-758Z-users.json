@@ -1,0 +1,10 @@
+[
+  {
+    "id": "ecba95b4-1dba-40f9-9015-41af1f42836b",
+    "username": "admin",
+    "email": "admin@testreport.com",
+    "passwordHash": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewvKnOcIlUK.BnQS",
+    "role": "admin",
+    "createdAt": "2025-08-09T01:59:25.566Z"
+  }
+]

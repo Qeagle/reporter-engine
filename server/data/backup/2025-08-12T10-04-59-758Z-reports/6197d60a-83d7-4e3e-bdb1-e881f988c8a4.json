@@ -1,0 +1,27 @@
+{
+  "id": "6197d60a-83d7-4e3e-bdb1-e881f988c8a4",
+  "testSuite": "Test Suite",
+  "environment": "local",
+  "framework": "testng-selenium",
+  "tags": [
+    "smoke"
+  ],
+  "metadata": {
+    "author": "Test",
+    "version": "1.0.0",
+    "browser": "chrome"
+  },
+  "projectId": "test",
+  "projectName": "Test",
+  "projectType": "selenium",
+  "status": "running",
+  "startTime": "2025-08-10T05:21:52.315Z",
+  "tests": [],
+  "summary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 0
+  }
+}
