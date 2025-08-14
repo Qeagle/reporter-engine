@@ -195,13 +195,13 @@ const FilterModal: React.FC<FilterModalProps> = ({
               <div>
                 <input
                   type="text"
-                  placeholder="Enter author name or regex pattern (e.g., john|jane)"
+                  placeholder="Enter author name or regex pattern (e.g., hari | shan)"
                   value={filters.authorText}
                   onChange={(e) => setFilters({ ...filters, authorText: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Supports regex patterns. Use | for OR (e.g., "john|jane"), .* for wildcards.
+                  Supports regex patterns. Use | for OR (e.g., "hari | shan"), .* for wildcards. Spaces around | are automatically handled.
                 </p>
               </div>
             </div>

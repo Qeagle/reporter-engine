@@ -38,6 +38,21 @@ const Reports: React.FC = () => {
       setLoading(true);
       const response = await reportService.getReports({ projectId: currentProject.id });
       const reportData = Array.isArray(response) ? response : response.data || [];
+      
+      // Debug: Log all unique authors found in the data
+      const allAuthors = new Set();
+      reportData.forEach((report: any) => {
+        if (report.tests) {
+          report.tests.forEach((test: any) => {
+            const author = test.author || test.metadata?.author;
+            if (author && author !== 'Unknown') {
+              allAuthors.add(author);
+            }
+          });
+        }
+      });
+      console.log('All authors found in reports:', Array.from(allAuthors));
+      
       setReports(reportData.sort((a: any, b: any) => 
         new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
       ));
@@ -86,8 +101,10 @@ const Reports: React.FC = () => {
           if (!author) return false;
           
           try {
+            // Clean up the filter text by trimming spaces around | operators
+            const cleanedPattern = filters.authorText.replace(/\s*\|\s*/g, '|').trim();
             // Create regex from the filter text (case-insensitive)
-            const regex = new RegExp(filters.authorText, 'i');
+            const regex = new RegExp(cleanedPattern, 'i');
             return regex.test(author);
           } catch (error) {
             // If regex is invalid, fall back to simple string matching
