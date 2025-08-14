@@ -114,6 +114,120 @@ class ReportService {
       throw new Error(error.response?.data?.error || 'Failed to compare reports');
     }
   }
+
+  async exportToHTML(reportId: string, includeArtifacts: boolean = true) {
+    try {
+      const response = await this.api.post(`/${reportId}/export/html?includeArtifacts=${includeArtifacts}`);
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to export HTML report');
+    }
+  }
+
+  async getExportSizeEstimates(reportId: string) {
+    try {
+      const response = await this.api.get(`/${reportId}/export/size-estimates`);
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to get export size estimates');
+    }
+  }
+
+  async downloadHTMLExport(reportId: string, exportId: string) {
+    try {
+      const response = await this.api.get(`/${reportId}/export/html/${exportId}/download`, {
+        responseType: 'blob'
+      });
+      
+      // Create download link for ZIP file
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `report-${reportId}-${exportId}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      return true;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to download HTML report export');
+    }
+  }
+
+  async listHTMLExports() {
+    try {
+      const response = await this.api.get('/exports/html');
+      return response.data.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to list HTML exports');
+    }
+  }
+
+  async deleteHTMLExport(exportId: string) {
+    try {
+      const response = await this.api.delete(`/exports/html/${exportId}`);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to delete HTML export');
+    }
+  }
+
+  // Test case specific exports
+  async exportTestCaseToPDF(reportId: string, testCaseId: string) {
+    try {
+      const response = await this.api.get(`/${reportId}/testcase/${testCaseId}/export/pdf`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `testcase-${testCaseId.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to export test case as PDF');
+    }
+  }
+
+  async exportTestCaseToHTML(reportId: string, testCaseId: string, includeArtifacts: boolean = true) {
+    try {
+      const response = await this.api.post(`/${reportId}/testcase/${testCaseId}/export/html`, {
+        includeArtifacts
+      });
+      
+      // Auto-download the export
+      await this.downloadTestCaseHTMLExport(reportId, testCaseId, response.data.exportId);
+      
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to export test case as HTML');
+    }
+  }
+
+  async downloadTestCaseHTMLExport(reportId: string, testCaseId: string, exportId: string) {
+    try {
+      const response = await this.api.get(`/${reportId}/testcase/${testCaseId}/export/html/${exportId}/download`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `testcase-${testCaseId.replace(/[^a-zA-Z0-9]/g, '_')}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to download test case HTML export');
+    }
+  }
 }
 
 export const reportService = new ReportService();

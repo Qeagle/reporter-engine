@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MessageSquare, BarChart3, Brain } from 'lucide-react';
+import { ArrowLeft, MessageSquare, BarChart3, Brain, Download, FileText, File } from 'lucide-react';
 import { reportService } from '../services/reportService';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import ReportSummary from '../components/ReportDetails/ReportSummary';
@@ -9,6 +9,7 @@ import ReportMetrics from '../components/ReportDetails/ReportMetrics';
 import AnnotationPanel from '../components/ReportDetails/AnnotationPanel';
 import AIInsights from '../components/AIInsights/AIInsights';
 import RunSummaryInsights from '../components/AIInsights/RunSummaryInsights';
+import ExportModal from '../components/ReportDetails/ExportModal';
 import toast from 'react-hot-toast';
 
 const ReportDetails: React.FC = () => {
@@ -18,6 +19,8 @@ const ReportDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('summary');
   const [showAnnotations, setShowAnnotations] = useState(false);
+  const [exportingHTML, setExportingHTML] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const { socket } = useWebSocket();
 
   useEffect(() => {
@@ -86,6 +89,33 @@ const ReportDetails: React.FC = () => {
     }
   };
 
+  const exportReportAsJSON = () => {
+    if (!report) return;
+    
+    const dataStr = JSON.stringify(report, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `report-${reportId}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('JSON report downloaded successfully!');
+  };
+
+  const exportReportAsPDF = async () => {
+    if (!reportId) return;
+    
+    try {
+      toast.loading('Generating PDF report...', { id: 'pdf-export' });
+      await reportService.exportToPDF(reportId);
+      toast.success('PDF report downloaded successfully!', { id: 'pdf-export' });
+    } catch (error: any) {
+      console.error('PDF export failed:', error);
+      toast.error(error.message || 'Failed to export PDF report', { id: 'pdf-export' });
+    }
+  };
+
   const tabs = [
     { id: 'summary', label: 'Summary', icon: BarChart3 },
     { id: 'tests', label: 'Test Results', icon: BarChart3 },
@@ -145,6 +175,30 @@ const ReportDetails: React.FC = () => {
 
         <div className="flex items-center space-x-2">
           <button
+            onClick={exportReportAsPDF}
+            className="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
+            title="Export as PDF - Complete test report with formatted layout"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Export PDF
+          </button>
+          <button
+            onClick={exportReportAsJSON}
+            className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+            title="Export as JSON - Raw test data for programmatic use"
+          >
+            <File className="w-4 h-4 mr-2" />
+            Export JSON
+          </button>
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+            title="Export as HTML - Interactive web report with options"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export HTML
+          </button>
+          <button
             onClick={() => setShowAnnotations(!showAnnotations)}
             className="inline-flex items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
           >
@@ -192,7 +246,7 @@ const ReportDetails: React.FC = () => {
               )}
             </div>
           )}
-          {activeTab === 'tests' && <TestsList tests={report.tests} />}
+          {activeTab === 'tests' && <TestsList tests={report.tests} reportId={reportId!} />}
           {activeTab === 'ai-insights' && <AIInsights reportId={reportId!} />}
           {activeTab === 'metrics' && <ReportMetrics metrics={metrics} />}
         </div>
@@ -205,6 +259,14 @@ const ReportDetails: React.FC = () => {
           onClose={() => setShowAnnotations(false)}
         />
       )}
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        reportId={reportId!}
+        reportName={report?.test_suite}
+      />
     </div>
   );
 };

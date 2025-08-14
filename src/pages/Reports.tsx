@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, User, AlertCircle, Calendar } from 'lucide-react';
+import { Search, Filter, User, AlertCircle, Calendar, FileText, File, Archive, Globe } from 'lucide-react';
 import { reportService } from '../services/reportService';
 import { useProject } from '../contexts/ProjectContext';
 import FilterModal, { FilterOptions } from '../components/Reports/FilterModal';
@@ -130,7 +130,7 @@ const Reports: React.FC = () => {
     return [...new Set(authors)];
   };
 
-  const exportReport = (report: any) => {
+  const exportReportAsJSON = (report: any) => {
     const dataStr = JSON.stringify(report, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -139,6 +139,55 @@ const Reports: React.FC = () => {
     link.download = `report-${report.id}.json`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const exportReportAsPDF = async (report: any) => {
+    try {
+      toast.loading('Generating PDF report...', { id: 'pdf-export' });
+      await reportService.exportToPDF(report.id);
+      toast.success('PDF report downloaded successfully!', { id: 'pdf-export' });
+    } catch (error: any) {
+      console.error('PDF export failed:', error);
+      toast.error(error.message || 'Failed to export PDF report', { id: 'pdf-export' });
+    }
+  };
+
+  // Export HTML without artifacts (lite version)
+  const exportReport = async (report: any) => {
+    try {
+      toast.loading('Generating HTML report...', { id: 'html-export' });
+      
+      // Export as lite version (no artifacts)
+      const exportResult = await reportService.exportToHTML(report.id, false);
+      
+      toast.success('HTML report export generated successfully!', { id: 'html-export' });
+      
+      // Auto-download the export
+      await reportService.downloadHTMLExport(report.id, exportResult.exportId);
+      
+    } catch (error: any) {
+      console.error('HTML export failed:', error);
+      toast.error(error.message || 'Failed to export HTML report', { id: 'html-export' });
+    }
+  };
+
+  // Export HTML with artifacts (full version)
+  const exportReportWithArtifacts = async (report: any) => {
+    try {
+      toast.loading('Generating HTML report with artifacts...', { id: 'html-with-artifacts-export' });
+      
+      // Export with artifacts included
+      const exportResult = await reportService.exportToHTML(report.id, true);
+      
+      toast.success('HTML report with artifacts generated successfully!', { id: 'html-with-artifacts-export' });
+      
+      // Auto-download the export
+      await reportService.downloadHTMLExport(report.id, exportResult.exportId);
+      
+    } catch (error: any) {
+      console.error('HTML with artifacts export failed:', error);
+      toast.error(error.message || 'Failed to export HTML report with artifacts', { id: 'html-with-artifacts-export' });
+    }
   };
 
   if (loading) {
@@ -260,11 +309,32 @@ const Reports: React.FC = () => {
 
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => exportReport(report)}
-                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                    title="Export Report"
+                    onClick={() => exportReportAsPDF(report)}
+                    className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    title="Export as PDF - Complete test report with formatted layout"
                   >
-                    <Download className="w-4 h-4" />
+                    <FileText className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => exportReportAsJSON(report)}
+                    className="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                    title="Export as JSON - Raw test data for programmatic use"
+                  >
+                    <File className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => exportReport(report)}
+                    className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    title="Export as HTML - Interactive web report (no artifacts)"
+                  >
+                    <Globe className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => exportReportWithArtifacts(report)}
+                    className="p-2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                    title="Export as HTML with Artifacts - Complete report with screenshots, videos, and traces"
+                  >
+                    <Archive className="w-4 h-4" />
                   </button>
                 </div>
               </div>

@@ -12,6 +12,8 @@ import Reports from './pages/Reports';
 import ReportDetails from './pages/ReportDetails';
 import FailureAnalysis from './pages/FailureAnalysis';
 import TrendAnalysis from './pages/TrendAnalysis';
+import Exceptions from './pages/Exceptions';
+import ExceptionDetails from './pages/ExceptionDetails';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import AcceptInvitation from './pages/AcceptInvitation';
@@ -57,10 +59,24 @@ function App() {
                       </Layout>
                     </ProtectedRoute>
                   } />
+                  <Route path="/exceptions" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Exceptions />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
                   <Route path="/trends" element={
                     <ProtectedRoute>
                       <Layout>
                         <TrendAnalysis />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/exceptions/:signature" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <ExceptionDetails />
                       </Layout>
                     </ProtectedRoute>
                   } />
