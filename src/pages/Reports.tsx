@@ -18,6 +18,7 @@ const Reports: React.FC = () => {
     environment: [],
     framework: [],
     author: [],
+    authorText: '',
     dateRange: { start: '', end: '' }
   });
 
@@ -84,6 +85,26 @@ const Reports: React.FC = () => {
         return report.tests.some((test: any) => {
           const author = test.author || test.metadata?.author;
           return author && filters.author.includes(author);
+        });
+      });
+    }
+
+    // Author text filter with regex support
+    if (filters.authorText) {
+      filtered = filtered.filter(report => {
+        if (!report.tests) return false;
+        return report.tests.some((test: any) => {
+          const author = test.author || test.metadata?.author;
+          if (!author) return false;
+          
+          try {
+            // Create regex from the filter text (case-insensitive)
+            const regex = new RegExp(filters.authorText, 'i');
+            return regex.test(author);
+          } catch (error) {
+            // If regex is invalid, fall back to simple string matching
+            return author.toLowerCase().includes(filters.authorText.toLowerCase());
+          }
         });
       });
     }

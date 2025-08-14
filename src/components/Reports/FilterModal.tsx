@@ -14,6 +14,7 @@ export interface FilterOptions {
   environment: string[];
   framework: string[];
   author: string[];
+  authorText: string; // New field for regex text search
   dateRange: {
     start: string;
     end: string;
@@ -93,6 +94,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
       environment: [],
       framework: [],
       author: [],
+      authorText: '',
       dateRange: { start: '', end: '' }
     });
   };
@@ -191,6 +193,28 @@ const FilterModal: React.FC<FilterModalProps> = ({
               options={authors}
               category="author"
             />
+
+            {/* Author Text Filter with Regex Support */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <User className="w-4 h-4 text-gray-500" />
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Author Name Filter (Regex)
+                </h3>
+              </div>
+              <div>
+                <input
+                  type="text"
+                  placeholder="Enter author name or regex pattern (e.g., john|jane)"
+                  value={filters.authorText}
+                  onChange={(e) => setFilters({ ...filters, authorText: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Supports regex patterns. Use | for OR (e.g., "john|jane"), .* for wildcards.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Date Range Filter */}
