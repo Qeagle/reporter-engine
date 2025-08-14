@@ -128,6 +128,9 @@ class ReportController {
 
       // Parse JSON fields and transform field names for UI compatibility
       const parsedTestRuns = testRuns.map(testRun => {
+        // Get test cases for each report to enable author filtering
+        const testCases = this.db.getTestCasesByRun(testRun.id);
+        
         return {
           id: testRun.id,
           projectId: testRun.project_id,
@@ -146,7 +149,8 @@ class ReportController {
           metadata: JSON.parse(testRun.metadata || '{}'), // Raw query, need to parse
           summary: JSON.parse(testRun.summary || '{}'), // Raw query, need to parse
           project_name: testRun.project_name,
-          project_key: testRun.project_key
+          project_key: testRun.project_key,
+          tests: testCases // Add test cases for author filtering
         };
       });
 
