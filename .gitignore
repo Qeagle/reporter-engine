@@ -135,6 +135,11 @@ debug.log
 *.bak
 *.backup
 *.old
+*.backup-*
+*backup*
+server/data/backup/
+server/data/*.backup
+server/data/*.backup-*
 
 # Lock files (choose one based on your package manager)
 # yarn.lock

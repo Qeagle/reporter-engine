@@ -1,0 +1,43 @@
+[
+  {
+    "id": "ecba95b4-1dba-40f9-9015-41af1f42836b",
+    "username": "admin",
+    "email": "admin@testreport.com",
+    "passwordHash": "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewvKnOcIlUK.BnQS",
+    "role": "admin",
+    "createdAt": "2025-08-09T01:59:25.566Z"
+  },
+  {
+    "id": "babu1234-5678-9abc-def0-123456789abc",
+    "username": "babu.manickam",
+    "email": "babu.manickam@qeagle.com",
+    "passwordHash": "$2a$12$Q5e9Q4QSrCrv8XlV3nCIlegEhkWSBG0c1DoMAuWCmnl.pAQ6ID4ly",
+    "role": "admin",
+    "firstName": "Babu",
+    "lastName": "Manickam",
+    "createdAt": "2025-08-14T06:30:00.000Z",
+    "isActive": true
+  },
+  {
+    "id": "suda1234-5678-9abc-def0-123456789abc",
+    "username": "sudarshan.ramanujam",
+    "email": "sudarshan.ramanujam@qeagle.com",
+    "passwordHash": "$2a$12$Q5e9Q4QSrCrv8XlV3nCIlegEhkWSBG0c1DoMAuWCmnl.pAQ6ID4ly",
+    "role": "admin",
+    "firstName": "Sudarshan",
+    "lastName": "R",
+    "createdAt": "2025-08-14T06:30:00.000Z",
+    "isActive": true
+  },
+  {
+    "id": "hari1234-5678-9abc-def0-123456789abc",
+    "username": "hari.radhakrishnan",
+    "email": "hari.radhakrishnan@qeagle.com",
+    "passwordHash": "$2a$12$Q5e9Q4QSrCrv8XlV3nCIlegEhkWSBG0c1DoMAuWCmnl.pAQ6ID4ly",
+    "role": "admin",
+    "firstName": "Hari Prasad",
+    "lastName": "Radhakrishnan",
+    "createdAt": "2025-08-14T06:30:00.000Z",
+    "isActive": true
+  }
+]

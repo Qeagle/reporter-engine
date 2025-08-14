@@ -21,6 +21,7 @@ import invitationRoutes from './routes/invitationRoutes.js';
 import defectRoutes from './routes/defectRoutes.js';
 import failureAnalysisRoutes from './routes/failureAnalysisRoutes.js';
 import trendRoutes from './routes/trendRoutes.js';
+import profileRoutes from './routes/profileRoutes.js';
 
 // Import middleware
 import authMiddleware from './middleware/authMiddleware.js';
@@ -46,7 +47,9 @@ const io = new socketIo(server, {
 const databaseService = new DatabaseService();
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 app.use(cors({
   origin: [
     process.env.CLIENT_URL || "http://localhost:5173", 
@@ -65,6 +68,16 @@ const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
+
+// Add CORS headers for uploaded files
+app.use('/uploads', (req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.header('Cross-Origin-Resource-Policy', 'cross-origin');
+  next();
+});
+
 app.use('/uploads', express.static(uploadsDir));
 
 // Initialize services
@@ -89,6 +102,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/defects', defectRoutes);
 app.use('/api/analysis', failureAnalysisRoutes);
 app.use('/api/trends', trendRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

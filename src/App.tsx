@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -13,6 +12,7 @@ import ReportDetails from './pages/ReportDetails';
 import FailureAnalysis from './pages/FailureAnalysis';
 import TrendAnalysis from './pages/TrendAnalysis';
 import Settings from './pages/Settings';
+import Profile from './pages/Profile';
 import Login from './pages/Login';
 import AcceptInvitation from './pages/AcceptInvitation';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
@@ -68,6 +68,13 @@ function App() {
                     <ProtectedRoute>
                       <Layout>
                         <Settings />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Profile />
                       </Layout>
                     </ProtectedRoute>
                   } />

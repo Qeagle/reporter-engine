@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, User, AlertCircle, Calendar } from 'lucide-react';
+import { Search, Filter, Download, User, AlertCircle, Calendar, FileText } from 'lucide-react';
 import { reportService } from '../services/reportService';
 import { useProject } from '../contexts/ProjectContext';
 import FilterModal, { FilterOptions } from '../components/Reports/FilterModal';
@@ -151,8 +151,19 @@ const Reports: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Test Reports</h1>
+        <div className="flex items-center space-x-3">
+          <FileText className="w-8 h-8 text-green-600" />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Test Reports
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400">
+              View and analyze test execution reports
+            </p>
+          </div>
+        </div>
         <div className="flex items-center space-x-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
