@@ -22,6 +22,7 @@ import defectRoutes from './routes/defectRoutes.js';
 import failureAnalysisRoutes from './routes/failureAnalysisRoutes.js';
 import trendRoutes from './routes/trendRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
+import annotationRoutes from './routes/annotationRoutes.js';
 
 // Import middleware
 import authMiddleware from './middleware/authMiddleware.js';
@@ -103,6 +104,7 @@ app.use('/api/defects', defectRoutes);
 app.use('/api/analysis', failureAnalysisRoutes);
 app.use('/api/trends', trendRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/annotations', annotationRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

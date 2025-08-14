@@ -425,6 +425,11 @@ class DatabaseService {
   close() {
     this.db.close();
   }
+
+  // Get the underlying database instance for custom queries
+  getDb() {
+    return this.db;
+  }
 }
 
 export default DatabaseService;

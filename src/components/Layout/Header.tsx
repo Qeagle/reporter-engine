@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, User } from 'lucide-react';
+import { Menu, User, FolderOpen } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useProject } from '../../contexts/ProjectContext';
-import ProjectSelector from '../ProjectSelector';
-import ProjectManagementModal from '../ProjectManagementModal';
+import ModernProjectSwitcher from '../ModernProjectSwitcher';
+import MobileProjectSwitcher from '../MobileProjectSwitcher';
+import NotificationBell from './NotificationBell';
 import profileService from '../../services/profileService';
 
 interface HeaderProps {
@@ -12,9 +13,9 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
-  const { currentProject, setCurrentProject, refreshProjects } = useProject();
-  const [showProjectManagement, setShowProjectManagement] = useState(false);
+  const { currentProject } = useProject();
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [showMobileProjectSwitcher, setShowMobileProjectSwitcher] = useState(false);
 
   // Fetch user profile for display name
   useEffect(() => {
@@ -50,18 +51,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     return user?.username || 'User';
   };
 
-  const handleProjectChange = (project: any) => {
-    setCurrentProject(project);
-  };
-
-  const handleManageProjects = () => {
-    setShowProjectManagement(true);
-  };
-
-  const handleProjectCreated = () => {
-    refreshProjects();
-  };
-
   return (
     <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
       <div className="flex items-center justify-between px-6 py-4">
@@ -73,18 +62,23 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             <Menu className="w-6 h-6" />
           </button>
           
-          {/* Project Selector */}
+          {/* Mobile Project Switcher */}
+          <button
+            onClick={() => setShowMobileProjectSwitcher(true)}
+            className="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+          >
+            <FolderOpen className="w-5 h-5" />
+          </button>
+          
+          {/* Modern Project Switcher */}
           <div className="hidden md:block">
-            <ProjectSelector
-              currentProject={currentProject || undefined}
-              onProjectChange={handleProjectChange}
-              onManageProjects={handleManageProjects}
-              isAdmin={user?.role === 'admin'}
-            />
+            <ModernProjectSwitcher />
           </div>
         </div>
 
         <div className="flex items-center space-x-4">
+          <NotificationBell />
+          
           <div className="relative group">
             <button className="flex items-center space-x-2 p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
               {userProfile?.avatarUrl ? (
@@ -116,11 +110,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         </div>
       </div>
 
-      {/* Project Management Modal */}
-      <ProjectManagementModal
-        isOpen={showProjectManagement}
-        onClose={() => setShowProjectManagement(false)}
-        onProjectCreated={handleProjectCreated}
+      {/* Mobile Project Switcher */}
+      <MobileProjectSwitcher
+        isOpen={showMobileProjectSwitcher}
+        onClose={() => setShowMobileProjectSwitcher(false)}
       />
     </header>
   );
