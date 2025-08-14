@@ -82,6 +82,11 @@ class DatabaseService {
     return this.findUserById(id);
   }
 
+  getAllUsers() {
+    const stmt = this.db.prepare('SELECT * FROM users ORDER BY created_at DESC');
+    return stmt.all();
+  }
+
   // Role operations
   createRole(roleData) {
     const stmt = this.db.prepare(`

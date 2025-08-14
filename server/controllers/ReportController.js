@@ -1,14 +1,18 @@
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
+import fs from 'fs';
 import DatabaseService from '../services/DatabaseService.js';
 import PDFService from '../services/PDFService.js';
 import AnalyticsService from '../services/AnalyticsService.js';
+import HtmlExportService from '../services/HtmlExportService.js';
 
 class ReportController {
   constructor() {
     this.db = new DatabaseService();
     this.pdfService = new PDFService();
     this.analyticsService = new AnalyticsService();
+    this.htmlExportService = new HtmlExportService();
   }
 
   async getReports(req, res) {
@@ -457,7 +461,7 @@ class ReportController {
       const { reportId } = req.params;
       const userId = req.user?.id;
 
-      const testRun = this.db.getTestRunById(reportId);
+      const testRun = this.db.findTestRunById(reportId);
       if (!testRun) {
         return res.status(404).json({
           success: false,
@@ -466,18 +470,46 @@ class ReportController {
       }
 
       // Check permissions
-      if (!this.db.checkProjectPermission(userId, testRun.project_id, 'read')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Access denied to this report'
-        });
+      if (req.user.role !== 'admin') {
+        const hasAccess = this.db.userHasProjectPermission(req.user.userId, testRun.project_id, 'test.read');
+        if (!hasAccess) {
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied to this report'
+          });
+        }
       }
 
-      // For now, return a placeholder response
-      res.status(501).json({
-        success: false,
-        error: 'PDF export not yet implemented'
+      // Construct report data similar to JSON export
+      const testCases = this.db.getTestCasesByRun(reportId);
+      const enrichedTestCases = testCases.map(testCase => {
+        const steps = this.db.getTestStepsByCase(testCase.id);
+        const artifacts = this.db.getTestArtifactsByCase(testCase.id);
+        
+        return {
+          ...testCase,
+          steps,
+          artifacts,
+          metadata: typeof testCase.metadata === 'string' ? JSON.parse(testCase.metadata || '{}') : (testCase.metadata || {})
+        };
       });
+
+      const reportData = {
+        ...testRun,
+        tests: enrichedTestCases,
+        summary: typeof testRun.summary === 'string' ? JSON.parse(testRun.summary || '{}') : (testRun.summary || {})
+      };
+
+      // Generate PDF using the PDF service
+      const buffer = await this.pdfService.generateReportPDF(reportData);
+
+      // Set headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="test-report-${testRun.id}.pdf"`);
+      res.setHeader('Content-Length', buffer.length);
+
+      // Send the PDF buffer
+      res.send(buffer);
     } catch (error) {
       console.error('❌ Error in exportToPDF:', error);
       res.status(500).json({
@@ -493,7 +525,7 @@ class ReportController {
       const { reportId } = req.params;
       const userId = req.user?.id;
 
-      const testRun = this.db.getTestRunById(reportId);
+      const testRun = this.db.findTestRunById(reportId);
       if (!testRun) {
         return res.status(404).json({
           success: false,
@@ -502,14 +534,17 @@ class ReportController {
       }
 
       // Check permissions
-      if (!this.db.checkProjectPermission(userId, testRun.project_id, 'read')) {
-        return res.status(403).json({
-          success: false,
-          error: 'Access denied to this report'
-        });
+      if (req.user.role !== 'admin') {
+        const hasAccess = this.db.userHasProjectPermission(req.user.userId, testRun.project_id, 'test.read');
+        if (!hasAccess) {
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied to this report'
+          });
+        }
       }
 
-      const testCases = this.db.getTestCasesByRunId(reportId);
+      const testCases = this.db.getTestCasesByRun(reportId);
       const reportData = {
         ...testRun,
         tests: testCases.map(tc => ({
@@ -534,6 +569,289 @@ class ReportController {
     }
   }
 
+  async exportToHTML(req, res) {
+    try {
+      const { reportId } = req.params;
+      const { includeArtifacts = true } = req.query; // Default to including artifacts
+      const userId = req.user?.id;
+
+      // Find test run by ID or run_key
+      let testRun = this.db.findTestRunById(reportId);
+      if (!testRun) {
+        const runByKey = this.db.db.prepare('SELECT * FROM test_runs WHERE run_key = ?').get(reportId);
+        if (runByKey) {
+          testRun = this.db.findTestRunById(runByKey.id);
+        }
+      }
+
+      if (!testRun) {
+        return res.status(404).json({
+          success: false,
+          error: 'Report not found'
+        });
+      }
+
+      // Check permissions
+      if (req.user.role !== 'admin') {
+        const hasAccess = this.db.userHasProjectPermission(req.user.userId, testRun.project_id, 'test.read');
+        if (!hasAccess) {
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied to this report'
+          });
+        }
+      }
+
+      // Export to ZIP with option to include/exclude artifacts
+      const exportResult = await this.htmlExportService.exportReportAsZip(testRun.id, { 
+        includeArtifacts: includeArtifacts === 'true' 
+      });
+
+      console.log('Export result:', {
+        exportId: exportResult.exportId,
+        zipPath: exportResult.zipPath,
+        zipFilename: exportResult.zipFilename
+      });
+
+      const exportType = includeArtifacts === 'true' ? 'full' : 'lite';
+      const message = includeArtifacts === 'true' 
+        ? 'Full report export with artifacts completed successfully'
+        : 'Lite report export (HTML only) completed successfully';
+
+      res.json({
+        success: true,
+        data: {
+          exportId: exportResult.exportId,
+          downloadUrl: `/api/reports/${reportId}/export/html/${exportResult.exportId}/download`,
+          size: exportResult.size,
+          type: exportType,
+          message: message
+        }
+      });
+
+    } catch (error) {
+      console.error('❌ Error in exportToHTML:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to export HTML report',
+        details: error.message
+      });
+    }
+  }
+
+  /**
+   * Get export size estimates for both lite and full options
+   */
+  async getExportSizeEstimates(req, res) {
+    try {
+      const { reportId } = req.params;
+
+      // Find test run by ID or run_key
+      let testRun = this.db.findTestRunById(reportId);
+      if (!testRun) {
+        const runByKey = this.db.db.prepare('SELECT * FROM test_runs WHERE run_key = ?').get(reportId);
+        if (runByKey) {
+          testRun = this.db.findTestRunById(runByKey.id);
+        }
+      }
+
+      if (!testRun) {
+        return res.status(404).json({
+          success: false,
+          error: 'Report not found'
+        });
+      }
+
+      // Check permissions
+      if (req.user.role !== 'admin') {
+        const hasAccess = this.db.userHasProjectPermission(req.user.userId, testRun.project_id, 'test.read');
+        if (!hasAccess) {
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied to this report'
+          });
+        }
+      }
+
+      const estimates = await this.htmlExportService.getExportSizeEstimates(testRun.id);
+
+      res.json({
+        success: true,
+        data: estimates
+      });
+
+    } catch (error) {
+      console.error('❌ Error getting export size estimates:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to get export size estimates',
+        details: error.message
+      });
+    }
+  }
+
+  async downloadZipExport(req, res) {
+    // This method is now redundant since downloadHTMLExport handles ZIP files
+    // Redirect to the main download handler
+    return this.downloadHTMLExport(req, res);
+  }
+
+  async downloadHTMLExport(req, res) {
+    try {
+      const { reportId, exportId } = req.params;
+      const userId = req.user?.id;
+
+      // Verify report access
+      let testRun = this.db.findTestRunById(reportId);
+      if (!testRun) {
+        const runByKey = this.db.db.prepare('SELECT * FROM test_runs WHERE run_key = ?').get(reportId);
+        if (runByKey) {
+          testRun = this.db.findTestRunById(runByKey.id);
+        }
+      }
+
+      if (!testRun) {
+        return res.status(404).json({
+          success: false,
+          error: 'Report not found'
+        });
+      }
+
+      // Check permissions
+      if (req.user.role !== 'admin') {
+        const hasAccess = this.db.userHasProjectPermission(req.user.userId, testRun.project_id, 'test.read');
+        if (!hasAccess) {
+          return res.status(403).json({
+            success: false,
+            error: 'Access denied to this report'
+          });
+        }
+      }
+
+      // Get ZIP path (updated to serve ZIP instead of HTML)
+      const zipPath = path.join(this.htmlExportService.exportsDir, `${exportId}.zip`);
+
+      console.log('Download request:', {
+        reportId,
+        exportId,
+        zipPath,
+        exists: fs.existsSync(zipPath)
+      });
+
+      if (!fs.existsSync(zipPath)) {
+        console.error(`ZIP file not found: ${zipPath}`);
+        return res.status(404).json({
+          success: false,
+          error: 'Export not found or expired'
+        });
+      }
+
+      // Validate ZIP file
+      try {
+        const stats = fs.statSync(zipPath);
+        if (stats.size === 0) {
+          return res.status(500).json({
+            success: false,
+            error: 'Export file is corrupted (empty file)'
+          });
+        }
+        console.log(`Serving ZIP file: ${zipPath} (${stats.size} bytes)`);
+      } catch (statError) {
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to read export file'
+        });
+      }
+
+      // Set headers for ZIP download with proper MIME type
+      const filename = `report-${testRun.test_suite || 'test-report'}-${exportId}.zip`;
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Length', fs.statSync(zipPath).size);
+
+      // Stream the ZIP file with error handling
+      const fileStream = fs.createReadStream(zipPath);
+      
+      fileStream.on('error', (streamError) => {
+        console.error('Error streaming ZIP file:', streamError);
+        if (!res.headersSent) {
+          res.status(500).json({
+            success: false,
+            error: 'Failed to stream export file'
+          });
+        }
+      });
+      
+      fileStream.pipe(res);
+
+    } catch (error) {
+      console.error('❌ Error in downloadHTMLExport:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to download HTML export',
+        details: error.message
+      });
+    }
+  }
+
+  async downloadZipExport(req, res) {
+    // This method is now redundant since downloadHTMLExport handles ZIP files
+    // Redirect to the main download handler
+    return this.downloadHTMLExport(req, res);
+  }
+
+  async listHTMLExports(req, res) {
+    try {
+      const exports = this.htmlExportService.getAvailableExports();
+      
+      res.json({
+        success: true,
+        data: exports.map(exp => ({
+          id: exp.id,
+          createdAt: exp.createdAt,
+          size: exp.size,
+          downloadUrl: `/api/reports/exports/html/${exp.id}/download`
+        }))
+      });
+
+    } catch (error) {
+      console.error('❌ Error in listHTMLExports:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to list HTML exports',
+        details: error.message
+      });
+    }
+  }
+
+  async deleteHTMLExport(req, res) {
+    try {
+      const { exportId } = req.params;
+      
+      const deleted = this.htmlExportService.deleteExport(exportId);
+      
+      if (deleted) {
+        res.json({
+          success: true,
+          message: 'HTML export deleted successfully'
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          error: 'Export not found'
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ Error in deleteHTMLExport:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to delete HTML export',
+        details: error.message
+      });
+    }
+  }
+
   async compareReports(req, res) {
     try {
       const { reportIds } = req.body;
@@ -547,12 +865,15 @@ class ReportController {
       }
 
       const reports = reportIds.map(id => {
-        const testRun = this.db.getTestRunById(id);
+        const testRun = this.db.findTestRunById(id);
         if (!testRun) return null;
         
         // Check permissions
-        if (!this.db.checkProjectPermission(userId, testRun.project_id, 'read')) {
-          return null;
+        if (req.user.role !== 'admin') {
+          const hasAccess = this.db.userHasProjectPermission(req.user.userId, testRun.project_id, 'test.read');
+          if (!hasAccess) {
+            return null;
+          }
         }
         
         return testRun;
@@ -613,6 +934,201 @@ class ReportController {
         success: false,
         error: 'Failed to search reports',
         details: error.message
+      });
+    }
+  }
+
+  // Test case specific export methods
+  async exportTestCaseToPDF(req, res) {
+    try {
+      const { reportId, testCaseId } = req.params;
+      const userId = req.user?.id;
+
+      // Find test run
+      let testRun = this.db.findTestRunById(reportId);
+      if (!testRun) {
+        const runByKey = this.db.db.prepare('SELECT * FROM test_runs WHERE run_key = ?').get(reportId);
+        if (runByKey) {
+          testRun = this.db.findTestRunById(runByKey.id);
+        }
+      }
+
+      if (!testRun) {
+        return res.status(404).json({
+          success: false,
+          error: 'Report not found'
+        });
+      }
+
+      // Find specific test case
+      const testCases = this.db.getTestCasesByRun(reportId);
+      const testCase = testCases.find(tc => tc.id === parseInt(testCaseId) || tc.name === testCaseId);
+
+      if (!testCase) {
+        return res.status(404).json({
+          success: false,
+          error: 'Test case not found'
+        });
+      }
+
+      // Get test case details
+      const steps = this.db.getTestStepsByCase(testCase.id);
+      const artifacts = this.db.getTestArtifactsByCase(testCase.id);
+      
+      const enrichedTestCase = {
+        ...testCase,
+        steps,
+        artifacts,
+        metadata: typeof testCase.metadata === 'string' ? JSON.parse(testCase.metadata || '{}') : (testCase.metadata || {})
+      };
+
+      // Create a mini report for this test case
+      const testCaseReport = {
+        ...testRun,
+        tests: [enrichedTestCase],
+        summary: {
+          total: 1,
+          passed: testCase.status === 'passed' ? 1 : 0,
+          failed: testCase.status === 'failed' ? 1 : 0,
+          skipped: testCase.status === 'skipped' ? 1 : 0,
+          passRate: testCase.status === 'passed' ? 100 : 0
+        }
+      };
+
+      // Generate PDF
+      const pdfBuffer = await this.pdfService.generateReportPDF(testCaseReport);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="testcase-${testCase.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`);
+      res.send(pdfBuffer);
+
+    } catch (error) {
+      console.error('❌ Error in exportTestCaseToPDF:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to export test case as PDF'
+      });
+    }
+  }
+
+  async exportTestCaseToHTML(req, res) {
+    try {
+      const { reportId, testCaseId } = req.params;
+      const { includeArtifacts = true } = req.body;
+      const userId = req.user?.id;
+
+      // Find test run
+      let testRun = this.db.findTestRunById(reportId);
+      if (!testRun) {
+        const runByKey = this.db.db.prepare('SELECT * FROM test_runs WHERE run_key = ?').get(reportId);
+        if (runByKey) {
+          testRun = this.db.findTestRunById(runByKey.id);
+        }
+      }
+
+      if (!testRun) {
+        return res.status(404).json({
+          success: false,
+          error: 'Report not found'
+        });
+      }
+
+      // Find specific test case
+      const testCases = this.db.getTestCasesByRun(reportId);
+      const testCase = testCases.find(tc => tc.id === parseInt(testCaseId) || tc.name === testCaseId);
+
+      if (!testCase) {
+        return res.status(404).json({
+          success: false,
+          error: 'Test case not found'
+        });
+      }
+
+      // Get test case details
+      const steps = this.db.getTestStepsByCase(testCase.id);
+      const artifacts = includeArtifacts ? this.db.getTestArtifactsByCase(testCase.id) : [];
+      
+      const enrichedTestCase = {
+        ...testCase,
+        steps,
+        artifacts,
+        metadata: typeof testCase.metadata === 'string' ? JSON.parse(testCase.metadata || '{}') : (testCase.metadata || {})
+      };
+
+      // Create a mini report for this test case
+      const testCaseReport = {
+        ...testRun,
+        tests: [enrichedTestCase],
+        summary: {
+          total: 1,
+          passed: testCase.status === 'passed' ? 1 : 0,
+          failed: testCase.status === 'failed' ? 1 : 0,
+          skipped: testCase.status === 'skipped' ? 1 : 0,
+          passRate: testCase.status === 'passed' ? 100 : 0
+        }
+      };
+
+      // Generate HTML export
+      const exportResult = await this.htmlExportService.exportReportAsZip(
+        testCaseReport,
+        includeArtifacts,
+        `testcase-${testCase.name.replace(/[^a-zA-Z0-9]/g, '_')}`
+      );
+
+      res.json({
+        success: true,
+        exportId: exportResult.exportId,
+        exportPath: exportResult.exportPath,
+        includeArtifacts,
+        testCaseName: testCase.name
+      });
+
+    } catch (error) {
+      console.error('❌ Error in exportTestCaseToHTML:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to export test case as HTML'
+      });
+    }
+  }
+
+  async downloadTestCaseHTMLExport(req, res) {
+    try {
+      const { reportId, testCaseId, exportId } = req.params;
+
+      // Find the export file
+      const exportPath = path.join(process.cwd(), 'server', 'data', 'reports', `${exportId}.zip`);
+      
+      if (!fs.existsSync(exportPath)) {
+        return res.status(404).json({
+          success: false,
+          error: 'Export file not found'
+        });
+      }
+
+      // Send the file
+      res.setHeader('Content-Type', 'application/zip');
+      res.setHeader('Content-Disposition', `attachment; filename="testcase-${testCaseId.replace(/[^a-zA-Z0-9]/g, '_')}.zip"`);
+      
+      const fileStream = fs.createReadStream(exportPath);
+      fileStream.pipe(res);
+
+      // Clean up the file after sending (optional)
+      fileStream.on('end', () => {
+        setTimeout(() => {
+          try {
+            fs.unlinkSync(exportPath);
+          } catch (error) {
+            console.warn('Failed to clean up export file:', error);
+          }
+        }, 5000); // Clean up after 5 seconds
+      });
+
+    } catch (error) {
+      console.error('❌ Error in downloadTestCaseHTMLExport:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to download test case HTML export'
       });
     }
   }

@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Clock, CheckCircle, XCircle, AlertCircle, Image, FileText, Timer, Monitor } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clock, CheckCircle, XCircle, AlertCircle, Image, FileText, Timer, Monitor, Download, File, Globe } from 'lucide-react';
 import TimerGraph from './TimerGraph';
 import InlineAIInsights from '../AIInsights/InlineAIInsights';
+import { reportService } from '../../services/reportService';
+import toast from 'react-hot-toast';
 
 interface TestsListProps {
   tests: any[];
+  reportId: string;
 }
 
-const TestsList: React.FC<TestsListProps> = ({ tests }) => {
+const TestsList: React.FC<TestsListProps> = ({ tests, reportId }) => {
   const [expandedTests, setExpandedTests] = useState<Set<string>>(new Set());
   const [showTimerGraph, setShowTimerGraph] = useState<string | null>(null);
   const [groupByBrowser, setGroupByBrowser] = useState(false);
@@ -127,6 +130,54 @@ const TestsList: React.FC<TestsListProps> = ({ tests }) => {
     return `${seconds}s`;
   };
 
+  // Export functions for individual test cases
+  const exportTestAsPDF = async (testCase: any) => {
+    try {
+      toast.loading('Generating PDF for test case...', { id: 'test-pdf-export' });
+      await reportService.exportTestCaseToPDF(reportId, testCase.id || testCase.name);
+      toast.success('Test case PDF downloaded successfully!', { id: 'test-pdf-export' });
+    } catch (error: any) {
+      console.error('Test case PDF export failed:', error);
+      toast.error(error.message || 'Failed to export test case as PDF', { id: 'test-pdf-export' });
+    }
+  };
+
+  const exportTestAsJSON = (testCase: any) => {
+    const testData = {
+      name: testCase.name,
+      status: testCase.status,
+      duration: testCase.duration,
+      error: testCase.errorMessage,
+      stackTrace: testCase.stackTrace,
+      steps: testCase.steps || [],
+      artifacts: testCase.artifacts || [],
+      metadata: testCase.metadata || {},
+      environment: getTestEnvironmentInfo(testCase)
+    };
+    
+    const dataStr = JSON.stringify(testData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `testcase-${testCase.name.replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('Test case JSON downloaded successfully!');
+  };
+
+  const exportTestAsHTML = async (testCase: any, includeArtifacts: boolean = true) => {
+    try {
+      const exportType = includeArtifacts ? 'with artifacts' : 'lite';
+      toast.loading(`Generating HTML for test case (${exportType})...`, { id: 'test-html-export' });
+      await reportService.exportTestCaseToHTML(reportId, testCase.id || testCase.name, includeArtifacts);
+      toast.success(`Test case HTML (${exportType}) downloaded successfully!`, { id: 'test-html-export' });
+    } catch (error: any) {
+      console.error('Test case HTML export failed:', error);
+      toast.error(error.message || 'Failed to export test case as HTML', { id: 'test-html-export' });
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Group toggle */}
@@ -199,6 +250,58 @@ const TestsList: React.FC<TestsListProps> = ({ tests }) => {
 
           {expandedTests.has(test.name) && (
             <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-700">
+              {/* Export buttons for individual test case */}
+              <div className="mb-4 flex items-center justify-between">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  Test Case Actions
+                </h4>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      exportTestAsPDF(test);
+                    }}
+                    className="inline-flex items-center px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
+                    title="Export this test case as PDF"
+                  >
+                    <FileText className="w-3 h-3 mr-1" />
+                    PDF
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      exportTestAsJSON(test);
+                    }}
+                    className="inline-flex items-center px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
+                    title="Export this test case as JSON"
+                  >
+                    <File className="w-3 h-3 mr-1" />
+                    JSON
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      exportTestAsHTML(test, false);
+                    }}
+                    className="inline-flex items-center px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+                    title="Export this test case as HTML (lite)"
+                  >
+                    <Globe className="w-3 h-3 mr-1" />
+                    HTML
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      exportTestAsHTML(test, true);
+                    }}
+                    className="inline-flex items-center px-2 py-1 bg-purple-600 text-white rounded text-xs hover:bg-purple-700 transition-colors"
+                    title="Export this test case as HTML with artifacts"
+                  >
+                    <Download className="w-3 h-3 mr-1" />
+                    HTML+
+                  </button>
+                </div>
+              </div>
               {/* Test Environment */}
               {(() => {
                 const envInfo = getTestEnvironmentInfo(test);

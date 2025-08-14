@@ -42,6 +42,7 @@
   "dependencies": {
     "@azure/storage-blob": "^12.24.0",
     "@heroicons/react": "^2.2.0",
+    "archiver": "^7.0.1",
     "argon2": "^0.44.0",
     "axios": "^1.7.9",
     "bcryptjs": "^2.4.3",
