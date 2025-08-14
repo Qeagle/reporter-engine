@@ -12,6 +12,7 @@ import ReportDetails from './pages/ReportDetails';
 import FailureAnalysis from './pages/FailureAnalysis';
 import TrendAnalysis from './pages/TrendAnalysis';
 import AnalysisActivity from './pages/AnalysisActivity';
+import Connectors from './pages/Connectors';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
@@ -69,6 +70,13 @@ function App() {
                     <ProtectedRoute>
                       <Layout>
                         <AnalysisActivity />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/connectors" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Connectors />
                       </Layout>
                     </ProtectedRoute>
                   } />
