@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, FileText, Settings, ChevronLeft, ChevronRight, Bug, TrendingUp } from 'lucide-react';
+import { BarChart3, FileText, Settings, ChevronLeft, ChevronRight, Bug, TrendingUp, User } from 'lucide-react';
 import { useSettings } from '../../contexts/SettingsContext';
 import { usePrimaryColor } from '../../hooks/usePrimaryColor';
 import Analytics360Icon from '../Brand/Analytics360Icon';
@@ -16,11 +16,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, onToggle, onColl
   const { settings } = useSettings();
   const { getIconClasses, getActiveClasses } = usePrimaryColor();
   
-  const navigation = [
+  const mainNavigation = [
     { name: 'Dashboard', href: '/', icon: BarChart3 },
     { name: 'Reports', href: '/reports', icon: FileText },
     { name: 'Failure Analysis', href: '/defects', icon: Bug },
     { name: 'Trend Analysis', href: '/trends', icon: TrendingUp },
+  ];
+
+  const bottomNavigation = [
+    { name: 'Profile', href: '/profile', icon: User },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
@@ -42,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, onToggle, onColl
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } ${
           isCollapsed ? 'w-16' : 'w-64'
-        } fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}
+        } fixed inset-y-0 left-0 z-50 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col`}
       >
         {/* Header with collapse button */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
@@ -74,9 +78,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, onToggle, onColl
           )}
         </div>
 
-        <nav className="mt-8">
+        {/* Main Navigation */}
+        <nav className="flex-1 flex flex-col justify-between mt-8">
           <div className={`${isCollapsed ? 'px-2' : 'px-4'}`}>
-            {navigation.map((item) => (
+            {mainNavigation.map((item) => (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                className={({ isActive }) =>
+                  `group flex items-center ${isCollapsed ? 'justify-center px-2 py-3' : 'px-3 py-2'} text-sm font-medium rounded-md mb-1 transition-colors duration-200 ${
+                    isActive
+                      ? `${getActiveClasses()} dark:bg-[var(--primary-900)] dark:text-[var(--primary-color)]`
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                  }`
+                }
+                title={isCollapsed ? item.name : undefined}
+              >
+                <item.icon className={`w-5 h-5 ${isCollapsed ? '' : 'mr-3'}`} />
+                {!isCollapsed && item.name}
+              </NavLink>
+            ))}
+          </div>
+
+          {/* Bottom Navigation */}
+          <div className={`${isCollapsed ? 'px-2' : 'px-4'} pb-4 border-t border-gray-200 dark:border-gray-700 pt-4`}>
+            {bottomNavigation.map((item) => (
               <NavLink
                 key={item.name}
                 to={item.href}

@@ -12,7 +12,7 @@ import {
   Filler
 } from 'chart.js';
 import { Line, Bar } from 'react-chartjs-2';
-import { Filter, TrendingUp, TrendingDown, Activity, Clock } from 'lucide-react';
+import { Filter, TrendingUp, TrendingDown, Activity, Clock, BarChart3 } from 'lucide-react';
 import { useProject } from '../contexts/ProjectContext';
 import trendService, { TrendData, TrendFilters, FilterOptions } from '../services/trendService';
 import toast from 'react-hot-toast';
@@ -254,12 +254,18 @@ const TrendAnalysis: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Trend Analysis</h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Historical analysis of test execution trends and patterns
-          </p>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-3">
+          <BarChart3 className="w-8 h-8 text-purple-600" />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Trend Analysis
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400">
+              Historical analysis of test execution trends and patterns
+            </p>
+          </div>
         </div>
       </div>
 

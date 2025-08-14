@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Menu, User } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useProject } from '../../contexts/ProjectContext';
 import ProjectSelector from '../ProjectSelector';
 import ProjectManagementModal from '../ProjectManagementModal';
+import profileService from '../../services/profileService';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -13,6 +14,41 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { user, logout } = useAuth();
   const { currentProject, setCurrentProject, refreshProjects } = useProject();
   const [showProjectManagement, setShowProjectManagement] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+
+  // Fetch user profile for display name
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const response = await profileService.getProfile();
+        setUserProfile(response.data.profile);
+      } catch (error) {
+        console.error('Error fetching user profile:', error);
+      }
+    };
+
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
+
+  // Get display name with fallback
+  const getDisplayName = () => {
+    if (userProfile?.display_name) {
+      return userProfile.display_name;
+    }
+    if (userProfile?.name) {
+      return userProfile.name;
+    }
+    if (user?.username && user.username.includes('@')) {
+      // Extract name from email (e.g., "john.doe@company.com" -> "John Doe")
+      const namePart = user.username.split('@')[0];
+      return namePart.split('.').map(part => 
+        part.charAt(0).toUpperCase() + part.slice(1)
+      ).join(' ');
+    }
+    return user?.username || 'User';
+  };
 
   const handleProjectChange = (project: any) => {
     setCurrentProject(project);
@@ -51,8 +87,16 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         <div className="flex items-center space-x-4">
           <div className="relative group">
             <button className="flex items-center space-x-2 p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
-              <User className="w-5 h-5" />
-              <span className="text-sm font-medium">{user?.username}</span>
+              {userProfile?.avatarUrl ? (
+                <img
+                  src={userProfile.avatarUrl.startsWith('http') ? userProfile.avatarUrl : `http://localhost:3001${userProfile.avatarUrl}`}
+                  alt="Profile"
+                  className="w-6 h-6 rounded-full object-cover border border-gray-300 dark:border-gray-600"
+                />
+              ) : (
+                <User className="w-5 h-5" />
+              )}
+              <span className="text-sm font-medium">{getDisplayName()}</span>
             </button>
             
             <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">

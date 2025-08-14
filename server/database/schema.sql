@@ -4,8 +4,16 @@ CREATE TABLE users (
   email         TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
   name          TEXT,
+  display_name  TEXT,
+  avatar_url    TEXT,
+  phone         TEXT,
+  bio           TEXT,
+  timezone      TEXT DEFAULT 'UTC',
+  location      TEXT,
+  website       TEXT,
   is_active     INTEGER NOT NULL DEFAULT 1,
-  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- User invitations
