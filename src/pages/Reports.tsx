@@ -17,7 +17,6 @@ const Reports: React.FC = () => {
     status: [],
     environment: [],
     framework: [],
-    author: [],
     authorText: '',
     dateRange: { start: '', end: '' }
   });
@@ -76,17 +75,6 @@ const Reports: React.FC = () => {
     // Framework filter
     if (filters.framework.length > 0) {
       filtered = filtered.filter(report => filters.framework.includes(report.framework));
-    }
-
-    // Author filter
-    if (filters.author.length > 0) {
-      filtered = filtered.filter(report => {
-        if (!report.tests) return false;
-        return report.tests.some((test: any) => {
-          const author = test.author || test.metadata?.author;
-          return author && filters.author.includes(author);
-        });
-      });
     }
 
     // Author text filter with regex support
