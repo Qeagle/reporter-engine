@@ -38,8 +38,17 @@ fi
 
 # Install dependencies if node_modules doesn't exist
 if [ ! -d "node_modules" ]; then
-    echo "📦 Installing dependencies..."
+    echo "📦 Installing all dependencies (including dev dependencies for build)..."
     npm install
+else
+    echo "📦 Node modules exist, ensuring dev dependencies are available for build..."
+    npm install
+fi
+
+# Verify that vite is available
+if ! npm list vite &>/dev/null; then
+    echo "🛠️  Vite not found, installing dev dependencies..."
+    npm install --include=dev
 fi
 
 # Get the public IP address of the VM
@@ -65,11 +74,39 @@ EOL
 
 # Build the frontend with the correct environment variables
 echo "🏗️  Building frontend with port $DEPLOY_PORT configuration..."
+
+# Debug: Check if vite is available
+echo "🔍 Checking build tools..."
+if command -v npx &> /dev/null; then
+    echo "✅ npx is available"
+else
+    echo "❌ npx not found"
+fi
+
+# List available scripts
+echo "📋 Available npm scripts:"
+npm run
+
+# Try building with detailed output
+echo "🏗️  Starting build process..."
 npm run build
 
 if [ ! -d "dist" ]; then
     echo "❌ Frontend build failed. dist directory not found."
-    exit 1
+    echo "🔍 Trying alternative build methods..."
+    
+    # Try with npx
+    echo "Trying with npx vite build..."
+    npx vite build
+    
+    if [ ! -d "dist" ]; then
+        echo "❌ Build still failed. Checking for build errors..."
+        echo "📋 Current directory contents:"
+        ls -la
+        echo "📋 Node modules status:"
+        ls -la node_modules/.bin/ | grep vite || echo "Vite not found in node_modules/.bin"
+        exit 1
+    fi
 fi
 
 # Create necessary directories
