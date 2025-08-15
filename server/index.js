@@ -49,12 +49,16 @@ const databaseService = new DatabaseService();
 
 // Middleware
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false, // Disable CSP that might block HTTP resources
+  hsts: false, // Disable HSTS for HTTP deployments
+  crossOriginOpenerPolicy: false // Disable COOP header that causes warnings
 }));
 app.use(cors({
   origin: [
     process.env.CLIENT_URL || "http://localhost:5173", 
-    "http://localhost:5174"
+    "http://localhost:5174",
+    /^http:\/\/.*:\d+$/ // Allow any HTTP origin with port
   ],
   credentials: true
 }));
