@@ -56,10 +56,20 @@ PUBLIC_IP=$(curl -s ifconfig.me 2>/dev/null || curl -s ipinfo.io/ip 2>/dev/null 
 
 # Create/update .env file with dynamic configuration
 echo "⚙️  Configuring environment for port $DEPLOY_PORT..."
+
+# Generate JWT secret only if .env doesn't exist or doesn't have one
+if [ ! -f ".env" ] || ! grep -q "JWT_SECRET=" .env; then
+    JWT_SECRET_VALUE=$(openssl rand -hex 32)
+    echo "🔑 Generating new JWT secret..."
+else
+    JWT_SECRET_VALUE=$(grep "JWT_SECRET=" .env | cut -d'=' -f2)
+    echo "🔑 Preserving existing JWT secret..."
+fi
+
 cat > .env << EOL
 NODE_ENV=production
 PORT=$DEPLOY_PORT
-JWT_SECRET=$(openssl rand -hex 32)
+JWT_SECRET=$JWT_SECRET_VALUE
 CLIENT_URL=http://$PUBLIC_IP:$DEPLOY_PORT
 API_BASE_URL=http://$PUBLIC_IP:$DEPLOY_PORT/api
 WEBSOCKET_URL=ws://$PUBLIC_IP:$DEPLOY_PORT
