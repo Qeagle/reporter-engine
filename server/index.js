@@ -81,6 +81,20 @@ app.use('/uploads', (req, res, next) => {
 
 app.use('/uploads', express.static(uploadsDir));
 
+// Serve static frontend files in production
+if (process.env.NODE_ENV === 'production') {
+  const frontendPath = path.join(__dirname, '..', 'dist');
+  app.use(express.static(frontendPath));
+  
+  // Serve index.html for all non-API routes (SPA routing)
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+}
+
 // Initialize services
 const reportService = new ReportService();
 const webSocketService = new WebSocketService(io);

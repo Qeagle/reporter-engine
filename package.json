@@ -30,6 +30,7 @@
   "scripts": {
     "dev": "concurrently \"npm run server\" \"vite\"",
     "server": "node server/index.js",
+    "start": "NODE_ENV=production node server/index.js",
     "build": "vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
