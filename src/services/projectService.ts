@@ -2,11 +2,14 @@ import { apiService } from './apiService';
 
 interface Project {
   id: string;
+  key?: string;
   name: string;
   description: string;
   type: string;
   status: 'active' | 'inactive';
-  createdAt: string;
+  visibility?: string;
+  createdAt?: string;
+  created_at?: string; // API field name
   settings: {
     retentionDays: number;
     autoCleanup: boolean;

@@ -66,38 +66,6 @@ const FailureAnalysis: React.FC = () => {
     }
   };
 
-  const handleDeepAnalyze = async () => {
-    try {
-      // await defectService.deepAnalyze(parseInt(currentProject!.id), filters);
-      toast.success('Deep analysis feature coming soon');
-      loadDefectSummary();
-    } catch (error) {
-      console.error('Error in deep analysis:', error);
-      toast.error('Deep analysis failed');
-    }
-  };
-
-  const handleDeduplicate = async () => {
-    try {
-      // await defectService.deduplicate(parseInt(currentProject!.id), filters);
-      toast.success('Deduplication feature coming soon');
-      loadDefectSummary();
-    } catch (error) {
-      console.error('Error in deduplication:', error);
-      toast.error('Deduplication failed');
-    }
-  };
-
-  const handlePushToJira = async () => {
-    try {
-      // await defectService.pushToJira(parseInt(currentProject!.id), filters);
-      toast.success('Jira integration feature coming soon');
-    } catch (error) {
-      console.error('Error pushing to Jira:', error);
-      toast.error('Failed to push to Jira');
-    }
-  };
-
   if (!currentProject) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -195,29 +163,47 @@ const FailureAnalysis: React.FC = () => {
               {autoClassifying ? 'Classifying...' : 'Auto-Classify'}
             </button>
             
-            <button
-              onClick={handleDeepAnalyze}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <Search className="w-4 h-4 mr-2" />
-              Deep Analyze
-            </button>
+            <div className="relative group">
+              <button
+                disabled
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                Deep Analyze
+              </button>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                Deep Analyze feature coming soon
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+              </div>
+            </div>
             
-            <button
-              onClick={handleDeduplicate}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <GitMerge className="w-4 h-4 mr-2" />
-              Deduplicate
-            </button>
+            <div className="relative group">
+              <button
+                disabled
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50"
+              >
+                <GitMerge className="w-4 h-4 mr-2" />
+                Deduplicate
+              </button>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                Deduplication feature coming soon
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+              </div>
+            </div>
             
-            <button
-              onClick={handlePushToJira}
-              className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Push to Jira
-            </button>
+            <div className="relative group">
+              <button
+                disabled
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Push to Jira
+              </button>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10">
+                Jira integration feature coming soon
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

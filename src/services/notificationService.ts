@@ -31,7 +31,11 @@ class NotificationService {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws?token=${token}`;
+      // Use the API URL for WebSocket connection
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      const wsUrl = apiUrl.replace(/^http/, 'ws') + `/ws?token=${token}`;
+      console.log('NotificationService - Connecting to WebSocket:', wsUrl);
+      
       this.websocket = new WebSocket(wsUrl);
 
       this.websocket.onopen = () => {

@@ -19,87 +19,9 @@ class AuthController {
         });
       }
 
-      // DEVELOPMENT MODE: Accept any credentials for testing
-      if (process.env.NODE_ENV !== 'production') {
-        // Use actual user from database if available, fallback to mock
-        let user = await this.databaseService.findUserByEmail(username);
-        
-        if (!user) {
-          // Create a mock user response for development
-          const token = jwt.sign(
-            { 
-              userId: 'dev-user', 
-              username: username, 
-              role: 'admin' 
-            },
-            this.jwtSecret || 'dev-secret',
-            { expiresIn: '24h' }
-          );
-
-          return res.json({
-            success: true,
-            token,
-            user: {
-              id: 'dev-user',
-              username: username,
-              email: username.includes('@') ? username : `${username}@example.com`,
-              role: 'admin'
-            }
-          });
-        }
-
-        // Check password for real user
-        const isValidPassword = await bcrypt.compare(password, user.password_hash);
-        
-        if (!isValidPassword) {
-          // In development, fall back to mock user for invalid credentials
-          const token = jwt.sign(
-            { 
-              userId: 'dev-user', 
-              username: username, 
-              role: 'admin' 
-            },
-            this.jwtSecret || 'dev-secret',
-            { expiresIn: '24h' }
-          );
-
-          return res.json({
-            success: true,
-            token,
-            user: {
-              id: 'dev-user',
-              username: username,
-              email: username.includes('@') ? username : `${username}@example.com`,
-              role: 'admin'
-            }
-          });
-        }
-
-        // Use real user from database
-        const token = jwt.sign(
-          { 
-            userId: user.id, 
-            username: user.email, 
-            role: 'admin' 
-          },
-          this.jwtSecret || 'dev-secret',
-          { expiresIn: '24h' }
-        );
-
-        return res.json({
-          success: true,
-          token,
-          user: {
-            id: user.id,
-            username: user.email,
-            email: user.email,
-            role: 'admin'
-          }
-        });
-      }
-
-      // PRODUCTION MODE: Actual authentication
+      // Find user by email
       const user = await this.databaseService.findUserByEmail(username);
+      
       if (!user) {
         return res.status(401).json({
           success: false,
@@ -107,7 +29,9 @@ class AuthController {
         });
       }
 
+      // Check password
       const isValidPassword = await bcrypt.compare(password, user.password_hash);
+      
       if (!isValidPassword) {
         return res.status(401).json({
           success: false,
@@ -115,6 +39,7 @@ class AuthController {
         });
       }
 
+      // Create JWT token with real user ID
       const token = jwt.sign(
         { 
           userId: user.id, 
@@ -125,7 +50,7 @@ class AuthController {
         { expiresIn: '24h' }
       );
 
-      res.json({
+      return res.json({
         success: true,
         token,
         user: {
@@ -211,19 +136,6 @@ class AuthController {
         return res.status(401).json({
           success: false,
           error: 'Authentication required'
-        });
-      }
-
-      // Handle development mode mock user
-      if (userId === 'dev-user') {
-        return res.json({
-          success: true,
-          user: {
-            id: 'dev-user',
-            username: req.user.username,
-            email: req.user.username.includes('@') ? req.user.username : `${req.user.username}@example.com`,
-            role: 'admin'
-          }
         });
       }
 

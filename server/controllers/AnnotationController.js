@@ -1,8 +1,32 @@
 import AnnotationService from '../services/AnnotationService.js';
+import DatabaseService from '../services/DatabaseService.js';
 
 class AnnotationController {
   constructor() {
     this.annotationService = new AnnotationService();
+    this.databaseService = new DatabaseService();
+  }
+
+  // Helper method to extract real user ID (handles dev mode)
+  extractUserId(req) {
+    let userId = req?.user?.userId || req?.user?.id;
+    
+    // Handle development mode mock users
+    if (userId === 'dev-user') {
+      console.log('AnnotationController - Development mode: trying to find real user for', req.user.username);
+      
+      // Try to find user by email from the database
+      const userByEmail = this.databaseService.findUserByEmail(req.user.username);
+      if (userByEmail) {
+        userId = userByEmail.id;
+        console.log('AnnotationController - Found real user, using ID:', userId);
+      } else {
+        return null; // Indicates no valid user found
+      }
+    }
+    
+    // Ensure userId is always an integer for database comparison
+    return userId ? parseInt(userId, 10) : null;
   }
 
   // Get project members for assignment dropdown
@@ -95,9 +119,13 @@ class AnnotationController {
       console.log('req.body:', req.body);
       console.log('req.params:', req.params);
 
-      const userId = req?.user?.userId;
+      const userId = this.extractUserId(req);
+      
       if (!userId) {
-        return res.status(401).json({ success: false, error: 'Unauthorized: missing userId' });
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Cannot create annotations for development mock users. Please use a real user account.' 
+        });
       }
 
       const { projectId } = req.params;
@@ -154,7 +182,7 @@ class AnnotationController {
         return res.status(400).json({ error: 'Invalid projectId' });
       }
 
-      const userId = req?.user?.userId;
+      const userId = this.extractUserId(req);
 
       const {
         assignedTo,
@@ -235,9 +263,13 @@ class AnnotationController {
   updateAssignment = async (req, res) => {
     try {
       const { annotationId } = req.params;
-      const userId = req?.user?.userId;
+      const userId = this.extractUserId(req);
+      
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized: missing userId' });
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Cannot update annotations for development mock users. Please use a real user account.' 
+        });
       }
 
       const id = parseInt(annotationId, 10);
@@ -260,11 +292,14 @@ class AnnotationController {
   updateStatus = async (req, res) => {
     try {
       const { annotationId } = req.params;
-      const userId = req?.user?.userId;
+      const userId = this.extractUserId(req);
       const { status, comment } = req.body ?? {};
 
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized: missing userId' });
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Cannot update annotations for development mock users. Please use a real user account.' 
+        });
       }
 
       if (!status) {
@@ -284,11 +319,14 @@ class AnnotationController {
   updateAnnotation = async (req, res) => {
     try {
       const { annotationId } = req.params;
-      const userId = req?.user?.userId;
+      const userId = this.extractUserId(req);
       const { title, message } = req.body ?? {};
 
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized: missing userId' });
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Cannot update annotations for development mock users. Please use a real user account.' 
+        });
       }
 
       if (!title || !message) {
@@ -315,11 +353,14 @@ class AnnotationController {
   addComment = async (req, res) => {
     try {
       const { annotationId } = req.params;
-      const userId = req?.user?.userId;
+      const userId = this.extractUserId(req);
       const { comment } = req.body ?? {};
 
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized: missing userId' });
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Cannot add comments for development mock users. Please use a real user account.' 
+        });
       }
 
       if (!comment || !String(comment).trim()) {
@@ -338,9 +379,13 @@ class AnnotationController {
   // Get user notifications
   getNotifications = async (req, res) => {
     try {
-      const userId = req?.user?.userId;
+      const userId = this.extractUserId(req);
+      
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized: missing userId' });
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Cannot get notifications for development mock users. Please use a real user account.' 
+        });
       }
 
       const { limit = 50, onlyUnread = false } = req.query;
@@ -361,9 +406,13 @@ class AnnotationController {
   markNotificationRead = async (req, res) => {
     try {
       const { notificationId } = req.params;
-      const userId = req?.user?.userId;
+      const userId = this.extractUserId(req);
+      
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized: missing userId' });
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Cannot mark notifications for development mock users. Please use a real user account.' 
+        });
       }
 
       await this.annotationService.markNotificationRead(parseInt(notificationId, 10), userId);
@@ -377,9 +426,13 @@ class AnnotationController {
   // Mark all notifications as read
   markAllNotificationsRead = async (req, res) => {
     try {
-      const userId = req?.user?.userId;
+      const userId = this.extractUserId(req);
+      
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized: missing userId' });
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Cannot mark notifications for development mock users. Please use a real user account.' 
+        });
       }
 
       await this.annotationService.markAllNotificationsRead(userId);
@@ -394,7 +447,7 @@ class AnnotationController {
   getStats = async (req, res) => {
     try {
       const { projectId } = req.params;
-      const userId = req?.user?.userId;
+      const userId = this.extractUserId(req);
       const { userOnly = false } = req.query;
 
       const pid = parseInt(projectId, 10);
@@ -418,9 +471,13 @@ class AnnotationController {
   toggleWatcher = async (req, res) => {
     try {
       const { annotationId } = req.params;
-      const userId = req?.user?.userId;
+      const userId = this.extractUserId(req);
+      
       if (!userId) {
-        return res.status(401).json({ error: 'Unauthorized: missing userId' });
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Cannot toggle watchers for development mock users. Please use a real user account.' 
+        });
       }
 
       await this.annotationService.addWatcher(parseInt(annotationId, 10), userId);

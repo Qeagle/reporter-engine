@@ -67,17 +67,6 @@ const Connectors: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   const integrations: Integration[] = [
-    // Bug Tracking Systems
-    {
-      id: 'jira-server',
-      name: 'Jira Server',
-      icon: JiraIcon,
-      description: 'Connect to your on-premise Jira Server instance to create and update issues automatically.',
-      version: '2.1.0',
-      status: 'not_connected',
-      category: 'bug_tracking',
-      website: 'https://www.atlassian.com/software/jira'
-    },
     {
       id: 'jira-cloud',
       name: 'Jira Cloud',

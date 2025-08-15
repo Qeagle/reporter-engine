@@ -339,6 +339,13 @@ class AnnotationService {
       throw new Error('Annotation not found');
     }
 
+    // Debug logging for troubleshooting
+    console.log('AnnotationService.updateAnnotation - Debug info:');
+    console.log('- annotationId:', annotationId);
+    console.log('- annotation.created_by:', annotation.created_by, typeof annotation.created_by);
+    console.log('- userId:', userId, typeof userId);
+    console.log('- annotation.status:', annotation.status);
+
     // Check if the user is the creator
     if (annotation.created_by !== userId) {
       throw new Error('Only the creator can edit this annotation');
