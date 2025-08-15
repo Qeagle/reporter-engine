@@ -83,7 +83,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             <button className="flex items-center space-x-2 p-2 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
               {userProfile?.avatarUrl ? (
                 <img
-                  src={userProfile.avatarUrl.startsWith('http') ? userProfile.avatarUrl : `http://localhost:3001${userProfile.avatarUrl}`}
+                  src={userProfile.avatarUrl.startsWith('http') ? userProfile.avatarUrl : `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}${userProfile.avatarUrl}`}
                   alt="Profile"
                   className="w-6 h-6 rounded-full object-cover border border-gray-300 dark:border-gray-600"
                 />
