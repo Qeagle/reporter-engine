@@ -26,6 +26,11 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({ onClose, onSuccess, current
       return;
     }
 
+    // Clean up previous preview
+    if (preview && preview.startsWith('blob:')) {
+      URL.revokeObjectURL(preview);
+    }
+
     setSelectedFile(file);
     setError(null);
 
@@ -33,6 +38,9 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({ onClose, onSuccess, current
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreview(e.target?.result as string);
+    };
+    reader.onerror = () => {
+      setError('Failed to read file. Please try again.');
     };
     reader.readAsDataURL(file);
   };
