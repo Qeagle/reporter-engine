@@ -6,6 +6,7 @@ import { SettingsProvider } from './contexts/SettingsContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout/Layout';
+import SessionExpiredNotification from './components/SessionExpiredNotification';
 import Dashboard from './pages/Dashboard';
 import Reports from './pages/Reports';
 import ReportDetails from './pages/ReportDetails';
@@ -28,6 +29,9 @@ function App() {
             <WebSocketProvider>
             <Router>
               <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+                {/* Session expiration notification */}
+                <SessionExpiredNotification />
+                
                 <Routes>
                   <Route path="/login" element={<Login />} />
                   <Route path="/accept-invitation/:token" element={<AcceptInvitation />} />

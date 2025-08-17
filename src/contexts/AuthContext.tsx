@@ -33,7 +33,8 @@ type AuthAction =
   | { type: 'REGISTER_START' }
   | { type: 'REGISTER_SUCCESS'; payload: { user: User; token: string } }
   | { type: 'REGISTER_FAILURE'; payload: string }
-  | { type: 'SET_LOADING'; payload: boolean };
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SESSION_EXPIRED' };
 
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
@@ -43,6 +44,13 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
     case 'LOGIN_SUCCESS':
     case 'REGISTER_SUCCESS':
       localStorage.setItem('token', action.payload.token);
+      // Broadcast login to other tabs
+      window.localStorage.setItem('auth_event', JSON.stringify({
+        type: 'LOGIN',
+        timestamp: Date.now(),
+        user: action.payload.user,
+        token: action.payload.token
+      }));
       return {
         ...state,
         user: action.payload.user,
@@ -54,7 +62,13 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
     case 'REGISTER_FAILURE':
       return { ...state, loading: false, error: action.payload };
     case 'LOGOUT':
+    case 'SESSION_EXPIRED':
       localStorage.removeItem('token');
+      // Broadcast logout to other tabs
+      window.localStorage.setItem('auth_event', JSON.stringify({
+        type: 'LOGOUT',
+        timestamp: Date.now()
+      }));
       return { user: null, token: null, loading: false, error: null };
     case 'SET_LOADING':
       return { ...state, loading: action.payload };
@@ -70,6 +84,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading: true, // Start with loading true to prevent flash
     error: null
   });
+
+  // Listen for storage events (cross-tab communication)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'auth_event' && e.newValue) {
+        try {
+          const event = JSON.parse(e.newValue);
+          if (event.type === 'LOGOUT') {
+            // Force logout in this tab
+            dispatch({ type: 'SESSION_EXPIRED' });
+          } else if (event.type === 'LOGIN') {
+            // Sync login state across tabs
+            dispatch({ 
+              type: 'LOGIN_SUCCESS', 
+              payload: { user: event.user, token: event.token } 
+            });
+          }
+        } catch (error) {
+          console.warn('Failed to parse auth event:', error);
+        }
+      }
+      
+      // Also listen for direct token removal
+      if (e.key === 'token' && !e.newValue && state.user) {
+        // Token was removed directly, force logout
+        dispatch({ type: 'SESSION_EXPIRED' });
+      }
+    };
+
+    // Handle immediate session expiration in current tab
+    const handleSessionExpiration = () => {
+      dispatch({ type: 'SESSION_EXPIRED' });
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('auth:session-expired', handleSessionExpiration);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('auth:session-expired', handleSessionExpiration);
+    };
+  }, [state.user]);
 
   useEffect(() => {
     const initAuth = async () => {

@@ -71,16 +71,75 @@ class ReportService {
         responseType: 'blob'
       });
       
+      // Extract filename from Content-Disposition header
+      const headers = response.headers || {};
+      let contentDisposition = null;
+      
+      for (const key of Object.keys(headers)) {
+        if (key.toLowerCase() === 'content-disposition') {
+          contentDisposition = headers[key];
+          break;
+        }
+      }
+      
+      let filename = `test-report-${reportId}.pdf`; // fallback
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `test-report-${reportId}.pdf`);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to export PDF');
+    }
+  }
+
+  async exportToJSON(reportId: string) {
+    try {
+      const response = await this.api.get(`/${reportId}/export/json`, {
+        responseType: 'blob'
+      });
+      
+      // Extract filename from Content-Disposition header
+      const headers = response.headers || {};
+      let contentDisposition = null;
+      
+      for (const key of Object.keys(headers)) {
+        if (key.toLowerCase() === 'content-disposition') {
+          contentDisposition = headers[key];
+          break;
+        }
+      }
+      
+      let filename = `report-${reportId}.json`; // fallback
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to export JSON');
     }
   }
 
@@ -139,11 +198,22 @@ class ReportService {
         responseType: 'blob'
       });
       
+      // Extract filename from Content-Disposition header
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `report-${reportId}-${exportId}.zip`; // fallback
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+      
       // Create download link for ZIP file
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `report-${reportId}-${exportId}.zip`);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -180,16 +250,55 @@ class ReportService {
         responseType: 'blob'
       });
       
+      // Try to extract filename from Content-Disposition header
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `testcase-${String(testCaseId).replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `testcase-${testCaseId.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error: any) {
       throw new Error(error.response?.data?.error || 'Failed to export test case as PDF');
+    }
+  }
+
+  async exportTestCaseToJSON(reportId: string, testCaseId: string) {
+    try {
+      const response = await this.api.get(`/${reportId}/testcase/${testCaseId}/export/json`);
+      
+      // Try to extract filename from Content-Disposition header
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `testcase-${String(testCaseId).replace(/[^a-zA-Z0-9]/g, '_')}.json`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+
+      const dataStr = JSON.stringify(response.data, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error: any) {
+      throw new Error(error.response?.data?.error || 'Failed to export test case as JSON');
     }
   }
 
@@ -214,10 +323,21 @@ class ReportService {
         responseType: 'blob'
       });
       
+      // Try to extract filename from Content-Disposition header
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = `testcase-${String(testCaseId).replace(/[^a-zA-Z0-9]/g, '_')}.zip`;
+      
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+      
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `testcase-${testCaseId.replace(/[^a-zA-Z0-9]/g, '_')}.zip`);
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();

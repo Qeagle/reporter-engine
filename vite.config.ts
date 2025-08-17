@@ -5,30 +5,30 @@ import react from '@vitejs/plugin-react';
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5173,
-    host: true,
+    port: 80, // Frontend runs on 80
+    host: '0.0.0.0', // Allow external connections
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'http://localhost:3001', // Backend runs on 3001
         changeOrigin: true,
+        secure: false,
       },
     },
-    // Improve HMR stability and separate from app WebSockets
     hmr: {
-      port: 24678, // Use a different port for HMR WebSocket
+      port: 24678,
+      // For remote access, use the actual server IP instead of localhost
+      host: process.env.VITE_HMR_HOST || 'localhost',
       overlay: true,
-      clientPort: 24678,
     },
-    // Watch options to reduce unnecessary reloads
     watch: {
       ignored: ['**/node_modules/**', '**/dist/**', '**/server/**', '**/uploads/**'],
-      usePolling: false,
+      usePolling: true, // Enable polling for remote file systems
+      interval: 1000,
     },
   },
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
-  // Reduce build overhead in development
   build: {
     sourcemap: true,
   },

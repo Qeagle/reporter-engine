@@ -21,10 +21,10 @@ interface SettingsContextType {
 }
 
 const defaultSettings: Settings = {
-  brandName: 'TestReport',
-  primaryColor: '#3B82F6',
+  brandName: 'QReport',
+  primaryColor: '#6D2366',
   logo: '',
-  footer: 'Powered by TestReport',
+  footer: 'Powered by Qeagle',
   webhooks: [],
   notifications: {
     email: true,

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useProject } from '../contexts/ProjectContext';
 import { Bug, Search, Calendar, Play, FileText, GitMerge, ExternalLink, BarChart3, AlertTriangle, CheckCircle, FileX } from 'lucide-react';
 import { defectService, DefectSummary, DefectFilters } from '../services/defectService';
+import { secureApiCall, validateSession } from '../utils/sessionUtils';
 import { TestCaseTab } from '../components/DefectTabs/TestCaseTab';
 import { SuiteRunTab } from '../components/DefectTabs/SuiteRunTab';
 import { GroupsTab } from '../components/DefectTabs/GroupsTab';
@@ -55,12 +56,26 @@ const FailureAnalysis: React.FC = () => {
   const handleAutoClassify = async () => {
     try {
       setAutoClassifying(true);
-      await defectService.autoClassify(parseInt(currentProject!.id), filters);
+      
+      // Validate session before making the API call
+      validateSession();
+      
+      await secureApiCall(
+        () => defectService.autoClassify(parseInt(currentProject!.id), filters),
+        'Auto-classification'
+      );
+      
       toast.success('Auto-classification completed');
       loadDefectSummary();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in auto-classification:', error);
-      toast.error('Auto-classification failed');
+      
+      // Show appropriate error message based on error type
+      if (error.message?.includes('Session expired')) {
+        toast.error('Session expired. Please log in again.');
+      } else {
+        toast.error('Auto-classification failed');
+      }
     } finally {
       setAutoClassifying(false);
     }

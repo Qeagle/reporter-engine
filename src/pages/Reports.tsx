@@ -13,6 +13,7 @@ const Reports: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [artifactCounts, setArtifactCounts] = useState<Record<string, number>>({});
   const [filters, setFilters] = useState<FilterOptions>({
     status: [],
     environment: [],
@@ -56,12 +57,33 @@ const Reports: React.FC = () => {
       setReports(reportData.sort((a: any, b: any) => 
         new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
       ));
+      
+      // Load artifact counts for each report
+      await loadArtifactCounts(reportData);
     } catch (error) {
       console.error('Error loading reports:', error);
       toast.error('Failed to load reports');
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadArtifactCounts = async (reportData: any[]) => {
+    const counts: Record<string, number> = {};
+    
+    // Load artifact counts for all reports in parallel
+    const promises = reportData.map(async (report: any) => {
+      try {
+        const estimates = await reportService.getExportSizeEstimates(report.id);
+        counts[report.id] = estimates.full.artifactCount || 0;
+      } catch (error) {
+        console.error(`Failed to get artifact count for report ${report.id}:`, error);
+        counts[report.id] = 0;
+      }
+    });
+    
+    await Promise.all(promises);
+    setArtifactCounts(counts);
   };
 
   const applyFilters = () => {
@@ -156,15 +178,15 @@ const Reports: React.FC = () => {
     return [...new Set(authors)];
   };
 
-  const exportReportAsJSON = (report: any) => {
-    const dataStr = JSON.stringify(report, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `report-${report.id}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+  const exportReportAsJSON = async (report: any) => {
+    try {
+      toast.loading('Generating JSON report...', { id: 'json-export' });
+      await reportService.exportToJSON(report.id);
+      toast.success('JSON report downloaded successfully!', { id: 'json-export' });
+    } catch (error: any) {
+      console.error('JSON export failed:', error);
+      toast.error(error.message || 'Failed to export JSON report', { id: 'json-export' });
+    }
   };
 
   const exportReportAsPDF = async (report: any) => {
@@ -345,34 +367,79 @@ const Reports: React.FC = () => {
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => exportReportAsPDF(report)}
-                    className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                    title="Export as PDF - Complete test report with formatted layout"
-                  >
-                    <FileText className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => exportReportAsJSON(report)}
-                    className="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
-                    title="Export as JSON - Raw test data for programmatic use"
-                  >
-                    <File className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => exportReport(report)}
-                    className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                    title="Export as HTML - Interactive web report (no artifacts)"
-                  >
-                    <Globe className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => exportReportWithArtifacts(report)}
-                    className="p-2 text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-                    title="Export as HTML with Artifacts - Complete report with screenshots, videos, and traces"
-                  >
-                    <Archive className="w-4 h-4" />
-                  </button>
+                  {/* PDF Export */}
+                  <div className="relative group">
+                    <button
+                      onClick={() => exportReportAsPDF(report)}
+                      className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      Export as PDF - Complete test report with formatted layout
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900"></div>
+                    </div>
+                  </div>
+                  
+                  {/* JSON Export */}
+                  <div className="relative group">
+                    <button
+                      onClick={() => exportReportAsJSON(report)}
+                      className="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                    >
+                      <File className="w-4 h-4" />
+                    </button>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      Export as JSON - Raw test data for programmatic use
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900"></div>
+                    </div>
+                  </div>
+                  
+                  {/* HTML Lite Export */}
+                  <div className="relative group">
+                    <button
+                      onClick={() => exportReport(report)}
+                      className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      <Globe className="w-4 h-4" />
+                    </button>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      Export as HTML - Interactive web report (no artifacts)
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900"></div>
+                    </div>
+                  </div>
+                  
+                  {/* HTML Full Export with Artifacts */}
+                  <div className="relative group">
+                    <button
+                      onClick={() => {
+                        const artifactCount = artifactCounts[report.id] ?? -1; // -1 means loading
+                        if (artifactCount > 0) {
+                          exportReportWithArtifacts(report);
+                        }
+                      }}
+                      disabled={artifactCounts[report.id] === 0}
+                      className={`p-2 transition-colors ${
+                        artifactCounts[report.id] === 0
+                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                          : artifactCounts[report.id] === undefined
+                          ? 'text-gray-400 opacity-50'
+                          : 'text-gray-400 hover:text-purple-600 dark:hover:text-purple-400'
+                      }`}
+                    >
+                      <Archive className="w-4 h-4" />
+                    </button>
+                    {/* Custom tooltip */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      {artifactCounts[report.id] === undefined
+                        ? 'Loading artifact information...'
+                        : artifactCounts[report.id] === 0
+                        ? 'No artifacts available in this report'
+                        : `Export as HTML with Artifacts - Complete report with screenshots, videos, and traces (${artifactCounts[report.id]} artifacts)`
+                      }
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

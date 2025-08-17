@@ -318,7 +318,7 @@ class ReportController {
       const testDurations = testCases
         .filter(tc => tc.duration && tc.duration > 0)
         .map(tc => ({
-          name: tc.title || tc.test_name || 'Unknown Test',
+          name: tc.name || tc.title || tc.test_name || 'Unknown Test',
           duration: tc.duration
         }))
         .sort((a, b) => b.duration - a.duration);
@@ -501,15 +501,29 @@ class ReportController {
       const reportData = {
         ...testRun,
         tests: enrichedTestCases,
-        summary: typeof testRun.summary === 'string' ? JSON.parse(testRun.summary || '{}') : (testRun.summary || {})
+        summary: typeof testRun.summary === 'string' ? JSON.parse(testRun.summary || '{}') : (testRun.summary || {}),
+        // Ensure consistent field names for PDF generation
+        testSuite: testRun.test_suite || testRun.environment || 'N/A',
+        startTime: testRun.started_at,
+        endTime: testRun.finished_at,
+        duration: testRun.duration || (testRun.finished_at && testRun.started_at ? new Date(testRun.finished_at) - new Date(testRun.started_at) : 0)
       };
 
       // Generate PDF using the PDF service
       const buffer = await this.pdfService.generateReportPDF(reportData);
 
+      // Generate a meaningful filename based on test suite and project
+      const project = this.db.findProjectById(testRun.project_id);
+      const projectName = project ? project.name : 'Unknown';
+      const testSuite = testRun.test_suite || testRun.environment || 'TestSuite';
+      const timestamp = new Date(testRun.started_at).toISOString().slice(0, 19).replace(/[:.]/g, '-');
+      const sanitizedName = `${projectName}_${testSuite}_${timestamp}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+      
+      console.log(`📄 PDF Export - Project: ${projectName}, Test Suite: ${testSuite}, Filename: ${sanitizedName}.pdf`);
+      
       // Set headers for PDF download
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="test-report-${testRun.id}.pdf"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${sanitizedName}.pdf"`);
       res.setHeader('Content-Length', buffer.length);
 
       // Send the PDF buffer
@@ -553,15 +567,24 @@ class ReportController {
         ...testRun,
         tests: testCases.map(tc => ({
           ...tc,
-          steps: JSON.parse(tc.steps || '[]'),
-          artifacts: JSON.parse(tc.artifacts || '[]'),
-          metadata: JSON.parse(tc.metadata || '{}')
+          steps: typeof tc.steps === 'string' ? JSON.parse(tc.steps || '[]') : (tc.steps || []),
+          artifacts: typeof tc.artifacts === 'string' ? JSON.parse(tc.artifacts || '[]') : (tc.artifacts || []),
+          metadata: typeof tc.metadata === 'string' ? JSON.parse(tc.metadata || '{}') : (tc.metadata || {})
         })),
-        summary: JSON.parse(testRun.summary || '{}')
+        summary: typeof testRun.summary === 'string' ? JSON.parse(testRun.summary || '{}') : (testRun.summary || {})
       };
 
+      // Generate a meaningful filename based on test suite and project
+      const project = this.db.findProjectById(testRun.project_id);
+      const projectName = project ? project.name : 'Unknown';
+      const testSuite = testRun.test_suite || testRun.environment || 'TestSuite';
+      const timestamp = new Date(testRun.started_at).toISOString().slice(0, 19).replace(/[:.]/g, '-');
+      const sanitizedName = `${projectName}_${testSuite}_${timestamp}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+      console.log(`📋 JSON Export - Project: ${projectName}, Test Suite: ${testSuite}, Filename: ${sanitizedName}.json`);
+
       res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename="report-${reportId}.json"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${sanitizedName}.json"`);
       res.json(reportData);
     } catch (error) {
       console.error('❌ Error in exportToJSON:', error);
@@ -767,8 +790,33 @@ class ReportController {
         });
       }
 
-      // Set headers for ZIP download with proper MIME type
-      const filename = `report-${testRun.test_suite || 'test-report'}-${exportId}.zip`;
+      // Set headers for ZIP download with proper MIME type and meaningful filename
+      const project = this.db.findProjectById(testRun.project_id);
+      const projectName = project ? project.name : 'Unknown';
+      const testSuite = testRun.test_suite || testRun.environment || 'TestSuite';
+      const timestamp = new Date(testRun.started_at).toISOString().slice(0, 19).replace(/[:.]/g, '-');
+      
+      // Determine export type from metadata file
+      let exportType = 'full'; // default
+      try {
+        const metadataPath = zipPath.replace('.zip', '.meta.json');
+        if (fs.existsSync(metadataPath)) {
+          const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+          exportType = metadata.exportType || 'full';
+          console.log(`Found export metadata: type=${exportType}`);
+        } else {
+          console.log('No export metadata found, using default type: full');
+        }
+      } catch (error) {
+        console.warn('Could not read export metadata:', error.message);
+        // Keep default 'full'
+      }
+      
+      const sanitizedName = `${projectName}_${testSuite}_${timestamp}_${exportType}`.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const filename = `${sanitizedName}.zip`;
+      
+      console.log(`📦 HTML Export Download - Project: ${projectName}, Test Suite: ${testSuite}, Type: ${exportType}, Filename: ${filename}`);
+      
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.setHeader('Content-Length', fs.statSync(zipPath).size);
@@ -1002,8 +1050,15 @@ class ReportController {
       // Generate PDF
       const pdfBuffer = await this.pdfService.generateReportPDF(testCaseReport);
 
+      // Generate meaningful filename (stop at second underscore to avoid long names)
+      const project = this.db.findProjectById(testRun.project_id);
+      const projectName = project?.name || 'unknown';
+      const suiteName = testRun.test_suite || 'suite';
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const filename = `${projectName}_${suiteName}_${timestamp}.pdf`;
+
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="testcase-${testCase.name.replace(/[^a-zA-Z0-9]/g, '_')}.pdf"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.send(pdfBuffer);
 
     } catch (error) {
@@ -1068,23 +1123,38 @@ class ReportController {
           passed: testCase.status === 'passed' ? 1 : 0,
           failed: testCase.status === 'failed' ? 1 : 0,
           skipped: testCase.status === 'skipped' ? 1 : 0,
-          passRate: testCase.status === 'passed' ? 100 : 0
+          passRate: testCase.status === 'passed' ? 100 : 0,
+          duration: testCase.duration || 0
         }
       };
 
       // Generate HTML export
+      const project = this.db.findProjectById(testRun.project_id);
+      const projectName = project?.name || 'unknown';
+      const suiteName = testRun.test_suite || 'suite';
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const exportType = includeArtifacts ? 'full' : 'lite';
+      const baseFilename = `${projectName}_${suiteName}_${exportType}_${timestamp}`;
+
       const exportResult = await this.htmlExportService.exportReportAsZip(
-        testCaseReport,
-        includeArtifacts,
-        `testcase-${testCase.name.replace(/[^a-zA-Z0-9]/g, '_')}`
+        reportId,
+        { 
+          includeArtifacts,
+          customFilename: baseFilename,
+          testCaseOnly: testCase.id,
+          testCaseReport: testCaseReport
+        }
       );
 
       res.json({
         success: true,
         exportId: exportResult.exportId,
         exportPath: exportResult.exportPath,
+        filename: exportResult.zipFilename || `${exportResult.exportId}.zip`,
         includeArtifacts,
-        testCaseName: testCase.name
+        testCaseName: testCase.name,
+        // Add the actual filename for download lookup
+        actualFilename: exportResult.zipFilename ? exportResult.zipFilename.replace('.zip', '') : exportResult.exportId
       });
 
     } catch (error) {
@@ -1100,19 +1170,74 @@ class ReportController {
     try {
       const { reportId, testCaseId, exportId } = req.params;
 
-      // Find the export file
-      const exportPath = path.join(process.cwd(), 'server', 'data', 'reports', `${exportId}.zip`);
+      const exportsDir = path.join(process.cwd(), 'server', 'data', 'backup', 'exports');
       
-      if (!fs.existsSync(exportPath)) {
+      let exportPath = null;
+      
+      // First, try to find a metadata file that contains this exportId
+      try {
+        const files = fs.readdirSync(exportsDir);
+        const metadataFiles = files.filter(file => file.endsWith('.meta.json'));
+        
+        for (const metadataFile of metadataFiles) {
+          try {
+            const metadataPath = path.join(exportsDir, metadataFile);
+            const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+            
+            if (metadata.exportId === exportId) {
+              // Found the metadata file, now find the corresponding ZIP file
+              const zipFilename = metadataFile.replace('.meta.json', '.zip');
+              const zipPath = path.join(exportsDir, zipFilename);
+              
+              if (fs.existsSync(zipPath)) {
+                exportPath = zipPath;
+                break;
+              }
+            }
+          } catch (err) {
+            // Skip invalid metadata files
+            continue;
+          }
+        }
+      } catch (err) {
+        console.error('Error reading exports directory:', err);
+      }
+      
+      // If not found via metadata, try direct file lookup patterns
+      if (!exportPath) {
+        const possiblePaths = [
+          path.join(exportsDir, `${exportId}.zip`),
+        ];
+        
+        for (const possiblePath of possiblePaths) {
+          if (fs.existsSync(possiblePath)) {
+            exportPath = possiblePath;
+            break;
+          }
+        }
+      }
+      
+      // Check if file exists
+      if (!exportPath || !fs.existsSync(exportPath)) {
         return res.status(404).json({
           success: false,
           error: 'Export file not found'
         });
       }
 
+      // Generate proper download filename (consistent with PDF/JSON exports)
+      const testRun = this.db.findTestRunById(reportId);
+      const project = this.db.findProjectById(testRun?.project_id);
+      const projectName = project?.name || 'unknown';
+      const suiteName = testRun?.test_suite || 'suite';
+      const cleanProjectName = projectName.replace(/[^a-zA-Z0-9]/g, '_');
+      const cleanSuiteName = suiteName.replace(/[^a-zA-Z0-9]/g, '_');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const downloadFilename = `${cleanProjectName}_${cleanSuiteName}_${timestamp}.zip`;
+
       // Send the file
       res.setHeader('Content-Type', 'application/zip');
-      res.setHeader('Content-Disposition', `attachment; filename="testcase-${testCaseId.replace(/[^a-zA-Z0-9]/g, '_')}.zip"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${downloadFilename}"`);
       
       const fileStream = fs.createReadStream(exportPath);
       fileStream.pipe(res);
@@ -1133,6 +1258,82 @@ class ReportController {
       res.status(500).json({
         success: false,
         error: 'Failed to download test case HTML export'
+      });
+    }
+  }
+
+  async exportTestCaseToJSON(req, res) {
+    try {
+      const { reportId, testCaseId } = req.params;
+      const userId = req.user?.id;
+
+      // Find test run
+      let testRun = this.db.findTestRunById(reportId);
+      if (!testRun) {
+        const runByKey = this.db.db.prepare('SELECT * FROM test_runs WHERE run_key = ?').get(reportId);
+        if (runByKey) {
+          testRun = this.db.findTestRunById(runByKey.id);
+        }
+      }
+
+      if (!testRun) {
+        return res.status(404).json({
+          success: false,
+          error: 'Report not found'
+        });
+      }
+
+      // Find specific test case
+      const testCases = this.db.getTestCasesByRun(reportId);
+      const testCase = testCases.find(tc => tc.id === parseInt(testCaseId) || tc.name === testCaseId);
+
+      if (!testCase) {
+        return res.status(404).json({
+          success: false,
+          error: 'Test case not found'
+        });
+      }
+
+      // Get test case details
+      const steps = this.db.getTestStepsByCase(testCase.id);
+      const artifacts = this.db.getTestArtifactsByCase(testCase.id);
+      
+      const enrichedTestCase = {
+        ...testCase,
+        steps,
+        artifacts,
+        metadata: typeof testCase.metadata === 'string' ? JSON.parse(testCase.metadata || '{}') : (testCase.metadata || {})
+      };
+
+      // Create a mini report for this test case
+      const testCaseReport = {
+        ...testRun,
+        tests: [enrichedTestCase],
+        summary: {
+          total: 1,
+          passed: testCase.status === 'passed' ? 1 : 0,
+          failed: testCase.status === 'failed' ? 1 : 0,
+          skipped: testCase.status === 'skipped' ? 1 : 0,
+          passRate: testCase.status === 'passed' ? 100 : 0
+        }
+      };
+
+      // Generate meaningful filename (stop at second underscore to avoid long names)
+      const project = this.db.findProjectById(testRun.project_id);
+      const projectName = project?.name || 'unknown';
+      const suiteName = testRun.test_suite || 'suite';
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+      const filename = `${projectName}_${suiteName}_${timestamp}.json`;
+
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.json(testCaseReport);
+
+    } catch (error) {
+      console.error('❌ Error in exportTestCaseToJSON:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to export test case to JSON'
       });
     }
   }

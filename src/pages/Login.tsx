@@ -158,12 +158,6 @@ const Login: React.FC = () => {
             </button>
           </div>
         </form>
-
-        <div className="text-center text-xs text-gray-500 dark:text-gray-400">
-          <p>Default credentials:</p>
-          <p>admin@testreport.com / admin</p>
-          <p>dev@example.com / password123</p>
-        </div>
       </div>
     </div>
   );

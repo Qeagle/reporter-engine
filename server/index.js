@@ -38,10 +38,17 @@ const server = http.createServer(app);
 const io = new socketIo(server, {
   cors: {
     origin: [
-      process.env.CLIENT_URL || "http://localhost:5173"
+      process.env.CLIENT_URL || "http://localhost",
+      "http://localhost",
+      "http://127.0.0.1",
+      "http://localhost:80",
+      /^http:\/\/localhost(:\d+)?$/ // Allow localhost with any port
     ],
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  allowEIO3: true,
+  transports: ['websocket', 'polling']
 });
 
 // Initialize database
@@ -56,11 +63,16 @@ app.use(helmet({
 }));
 app.use(cors({
   origin: [
-    process.env.CLIENT_URL || "http://localhost:5173", 
-    "http://localhost:5174",
-    /^http:\/\/.*:\d+$/ // Allow any HTTP origin with port
+    process.env.CLIENT_URL || "http://localhost",
+    "http://localhost",
+    "http://127.0.0.1", 
+    "http://localhost:80",
+    /^http:\/\/localhost(:\d+)?$/ // Allow localhost with any port
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Content-Disposition', 'Content-Length', 'Content-Type']
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -88,15 +100,32 @@ app.use('/uploads', express.static(uploadsDir));
 // Serve static frontend files in production
 if (process.env.NODE_ENV === 'production') {
   const frontendPath = path.join(__dirname, '..', 'dist');
-  app.use(express.static(frontendPath));
   
-  // Serve index.html for all non-API routes (SPA routing)
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api/')) {
-      return next();
-    }
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  });
+  // Ensure dist directory exists
+  if (fs.existsSync(frontendPath)) {
+    app.use(express.static(frontendPath, {
+      maxAge: '1d', // Cache static assets for 1 day
+      etag: true,
+      setHeaders: (res, path) => {
+        if (path.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache');
+        }
+      }
+    }));
+    
+    // Serve index.html for all non-API routes (SPA routing)
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api/') || req.path.startsWith('/uploads/')) {
+        return next();
+      }
+      res.sendFile(path.join(frontendPath, 'index.html'));
+    });
+    
+    console.log(`📁 Serving static files from: ${frontendPath}`);
+  } else {
+    console.warn(`⚠️  Frontend build not found at: ${frontendPath}`);
+    console.warn(`   Run 'npm run build:production' to build the frontend`);
+  }
 }
 
 // Initialize services
@@ -195,10 +224,15 @@ process.on('SIGINT', () => {
   });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Reporter Engine v2.0 server running on port ${PORT}`);
   console.log(`📊 Dashboard: http://localhost:${PORT}`);
-  console.log(`🔗 API Health: http://localhost:${PORT}/api/health`);
+  if (process.env.NODE_ENV === 'production') {
+    console.log(`🌐 Production Mode: Frontend served from backend`);
+    console.log(`🔗 Main Access: http://localhost (port 80 → ${PORT})`);
+  } else {
+    console.log(`🔗 API Health: http://localhost:${PORT}/api/health`);
+  }
   console.log(`🗄️  Database: SQLite with RBAC enabled`);
   console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
 });

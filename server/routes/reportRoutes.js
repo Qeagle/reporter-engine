@@ -21,6 +21,7 @@ router.get('/:reportId/export/html/:exportId/download', authMiddleware, reportCo
 
 // Test case specific exports
 router.get('/:reportId/testcase/:testCaseId/export/pdf', authMiddleware, reportController.exportTestCaseToPDF.bind(reportController));
+router.get('/:reportId/testcase/:testCaseId/export/json', authMiddleware, reportController.exportTestCaseToJSON.bind(reportController));
 router.post('/:reportId/testcase/:testCaseId/export/html', authMiddleware, reportController.exportTestCaseToHTML.bind(reportController));
 router.get('/:reportId/testcase/:testCaseId/export/html/:exportId/download', authMiddleware, reportController.downloadTestCaseHTMLExport.bind(reportController));
 

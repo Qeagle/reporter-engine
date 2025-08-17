@@ -35,6 +35,49 @@ class HtmlExportService {
    */
   async exportReport(reportId, options = {}) {
     try {
+      // Check if this is a test case only export
+      if (options.testCaseOnly && options.testCaseReport) {
+        // Get project information for the test case report
+        const testRun = options.testCaseReport;
+        const project = testRun.project_id ? this.db.findProjectById(testRun.project_id) : null;
+        
+        // Use the provided test case report data with proper structure
+        const exportData = {
+          report: {
+            ...options.testCaseReport,
+            project: project
+          },
+          testCases: options.testCaseReport.tests || [],
+          summary: options.testCaseReport.summary || { total: 0, passed: 0, failed: 0, skipped: 0 },
+          exportedAt: new Date().toISOString()
+        };
+
+        // Generate HTML content directly with the test case report data
+        const htmlContent = this.generateHTML(exportData, options);
+        
+        // Create export directory and save file
+        const exportId = `export-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const exportDir = path.join(this.exportsDir, exportId);
+        fs.mkdirSync(exportDir, { recursive: true });
+        
+        const htmlPath = path.join(exportDir, 'index.html');
+        fs.writeFileSync(htmlPath, htmlContent);
+
+        // Copy artifacts if includeAssets is true
+        if (options.includeAssets && exportData.testCases && exportData.testCases.length > 0) {
+          console.log('Copying artifacts for test case export...');
+          await this.copyAssets(exportDir, exportData.testCases);
+        }
+
+        return {
+          exportId,
+          exportPath: exportDir,
+          htmlPath,
+          success: true
+        };
+      }
+
+      // Regular report export logic
       // Get report data
       const report = this.db.findTestRunById(reportId);
       if (!report) {
@@ -111,10 +154,22 @@ class HtmlExportService {
       // Get test run info for folder naming
       const testRun = this.db.findTestRunById(reportId);
       const suffix = includeArtifacts ? 'full' : 'lite';
-      const folderName = `${testRun.test_suite || 'test-report'}-${exportResult.exportId}-${suffix}`;
       
-      // Create ZIP file with exportId as filename (for download URL compatibility)
-      const zipFilename = `${exportResult.exportId}.zip`;
+      // Use custom filename if provided, otherwise generate default
+      let folderName;
+      if (options.customFilename) {
+        folderName = `${options.customFilename}-${exportResult.exportId}`;
+      } else {
+        folderName = `${testRun.test_suite || 'test-report'}-${exportResult.exportId}-${suffix}`;
+      }
+      
+      // Create ZIP file - use custom filename if provided, otherwise use exportId
+      let zipFilename;
+      if (options.customFilename) {
+        zipFilename = `${options.customFilename}.zip`;
+      } else {
+        zipFilename = `${exportResult.exportId}.zip`;
+      }
       const zipPath = path.join(this.exportsDir, zipFilename);
       
       // Create a promise that resolves when the archive is finalized
@@ -145,12 +200,33 @@ class HtmlExportService {
               return;
             }
             
+            // Create metadata file for the export
+            const metadataPath = zipPath.replace('.zip', '.meta.json');
+            const metadata = {
+              exportId: exportResult.exportId,
+              reportId,
+              exportType: suffix, // 'full' or 'lite'
+              includeArtifacts,
+              createdAt: new Date().toISOString(),
+              size: finalSize,
+              testSuite: testRun.test_suite || 'test-report'
+            };
+            
+            try {
+              fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
+              console.log(`Export metadata created: ${metadataPath}`);
+            } catch (metaError) {
+              console.warn('Failed to create export metadata:', metaError.message);
+              // Don't fail the export if metadata creation fails
+            }
+            
             resolve({
               exportId: exportResult.exportId,
               zipPath,
               zipFilename,
               exportPath: exportResult.exportPath,
-              size: finalSize
+              size: finalSize,
+              exportType: suffix
             });
           } catch (statError) {
             reject(new Error(`Failed to verify ZIP file: ${statError.message}`));
@@ -280,6 +356,22 @@ class HtmlExportService {
         <!-- Summary Stats -->
         <section class="summary-section">
             {{SUMMARY_STATS}}
+        </section>
+
+        <!-- Filter Controls -->
+        <section class="filter-section">
+            <div class="filter-controls">
+                <h3>Filter Test Results</h3>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-filter="all">All Tests</button>
+                    <button class="filter-btn" data-filter="passed">Passed Only</button>
+                    <button class="filter-btn" data-filter="failed">Failed Only</button>
+                    <button class="filter-btn" data-filter="skipped">Skipped Only</button>
+                </div>
+                <div class="filter-stats">
+                    <span id="visible-count">0</span> of <span id="total-count">0</span> tests visible
+                </div>
+            </div>
         </section>
 
         <!-- Charts -->
@@ -655,6 +747,59 @@ class HtmlExportService {
             text-decoration: none;
         }
 
+        /* Filter Controls Styles */
+        .filter-section {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .filter-controls h3 {
+            margin-bottom: 1rem;
+            color: #374151;
+            font-size: 1.125rem;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            border-color: #6366f1;
+            color: #6366f1;
+        }
+
+        .filter-btn.active {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: white;
+        }
+
+        .filter-stats {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .test-case.hidden {
+            display: none;
+        }
+
         @media (max-width: 768px) {
             .charts-section {
                 grid-template-columns: 1fr;
@@ -662,6 +807,10 @@ class HtmlExportService {
             
             .summary-section {
                 grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .filter-buttons {
+                flex-direction: column;
             }
         }
     `;
@@ -682,9 +831,50 @@ class HtmlExportService {
                 });
             });
 
+            // Initialize filter functionality
+            initializeFilters();
+
             // Initialize charts
             initializeCharts();
         });
+
+        function initializeFilters() {
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const testCases = document.querySelectorAll('.test-case');
+            const visibleCount = document.getElementById('visible-count');
+            const totalCount = document.getElementById('total-count');
+
+            // Set total count
+            totalCount.textContent = testCases.length;
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active button
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const filter = this.dataset.filter;
+                    let visible = 0;
+
+                    testCases.forEach(testCase => {
+                        const shouldShow = filter === 'all' || testCase.classList.contains('status-' + filter);
+                        
+                        if (shouldShow) {
+                            testCase.classList.remove('hidden');
+                            visible++;
+                        } else {
+                            testCase.classList.add('hidden');
+                        }
+                    });
+
+                    // Update visible count
+                    visibleCount.textContent = visible;
+                });
+            });
+
+            // Initialize with all tests visible
+            visibleCount.textContent = testCases.length;
+        }
 
         function initializeCharts() {
             // Summary pie chart
@@ -777,7 +967,7 @@ class HtmlExportService {
    */
   generateTestCasesHTML(testCases) {
     return testCases.map(testCase => `
-        <div class="test-case">
+        <div class="test-case status-${testCase.status}">
             <div class="test-case-header">
                 <div class="test-info">
                     <div class="test-name">${this.escapeHtml(testCase.name)}</div>
@@ -907,6 +1097,7 @@ class HtmlExportService {
     
     console.log(`Copying artifacts to: ${artifactsDir}`);
     let copiedCount = 0;
+    let missingCount = 0;
 
     // Copy screenshots and other artifacts organized by test case
     for (const testCase of testCases) {
@@ -925,39 +1116,68 @@ class HtmlExportService {
             if (artifact.url) {
               const urlParts = artifact.url.split('/');
               storedFilename = urlParts[urlParts.length - 1]; // Get the last part after the last '/'
+              console.log(`Extracted filename from URL: ${storedFilename} from ${artifact.url}`);
             } else {
               // Fallback: construct from artifact_id + filename
               storedFilename = `${artifact.artifact_id}-${artifact.filename}`;
+              console.log(`Constructed filename: ${storedFilename}`);
             }
             
-            const sourcePath = path.join(__dirname, '..', 'uploads', storedFilename);
+            // Check multiple possible source paths
+            const uploadsDir = path.join(__dirname, '..', 'uploads');
+            let sourcePath = path.join(uploadsDir, storedFilename);
+            
+            if (!fs.existsSync(sourcePath)) {
+              // Try alternative filename patterns
+              const alternativePatterns = [
+                artifact.filename, // Original filename
+                `${artifact.artifact_id}-${artifact.filename}`, // artifact_id-filename
+                artifact.artifact_id // Just the artifact_id
+              ];
+              
+              for (const pattern of alternativePatterns) {
+                const altPath = path.join(uploadsDir, pattern);
+                if (fs.existsSync(altPath)) {
+                  sourcePath = altPath;
+                  console.log(`Found artifact using alternative pattern: ${pattern}`);
+                  break;
+                }
+              }
+            }
             
             if (fs.existsSync(sourcePath)) {
               // Copy with original filename to test case specific directory
               const destPath = path.join(testCaseDir, artifact.filename);
               fs.copyFileSync(sourcePath, destPath);
               copiedCount++;
-              console.log(`Copied artifact: ${artifact.filename} from ${storedFilename} to test-case-${testCase.id}/`);
+              console.log(`✓ Copied artifact: ${artifact.filename} from ${path.basename(sourcePath)} to test-case-${testCase.id}/`);
             } else {
-              console.warn(`Artifact not found: ${storedFilename} for ${artifact.filename}`);
-              
-              // Fallback: try direct filename match
-              const fallbackPath = path.join(__dirname, '..', 'uploads', artifact.filename);
-              if (fs.existsSync(fallbackPath)) {
-                const destPath = path.join(testCaseDir, artifact.filename);
-                fs.copyFileSync(fallbackPath, destPath);
-                copiedCount++;
-                console.log(`Copied artifact (fallback): ${artifact.filename} to test-case-${testCase.id}/`);
-              }
+              missingCount++;
+              console.warn(`✗ Artifact not found: ${storedFilename} for ${artifact.filename}`);
+              console.warn(`  Checked paths:`);
+              console.warn(`    - ${sourcePath}`);
+              console.warn(`    - ${path.join(uploadsDir, artifact.filename)}`);
+              console.warn(`    - ${path.join(uploadsDir, artifact.artifact_id)}`);
             }
           } catch (error) {
-            console.warn(`Failed to copy artifact ${artifact.filename}:`, error.message);
+            missingCount++;
+            console.warn(`✗ Failed to copy artifact ${artifact.filename}:`, error.message);
           }
         }
       }
     }
     
-    console.log(`Total artifacts copied: ${copiedCount}`);
+    console.log(`Artifacts summary: ${copiedCount} copied, ${missingCount} missing/failed`);
+    
+    // Create a manifest file with information about the artifacts
+    const manifestPath = path.join(artifactsDir, 'manifest.json');
+    const manifest = {
+      totalTestCases: testCases.length,
+      artifactsCopied: copiedCount,
+      artifactsMissing: missingCount,
+      generatedAt: new Date().toISOString()
+    };
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   }
 
   /**
@@ -988,12 +1208,52 @@ class HtmlExportService {
   }
 
   /**
-   * Format duration for display
+   * Format duration for display with configurable time units
    */
-  formatDuration(duration) {
-    if (duration < 1000) return `${duration}ms`;
-    if (duration < 60000) return `${(duration / 1000).toFixed(1)}s`;
-    return `${(duration / 60000).toFixed(1)}m`;
+  formatDuration(duration, options = {}) {
+    const { 
+      preferredUnit = 'auto', // 'auto', 'ms', 's', 'min', 'h'
+      precision = 1,
+      showUnit = true 
+    } = options;
+    
+    if (!duration || duration === 0) return '0ms';
+    
+    // Convert duration to milliseconds if not already
+    const durationMs = typeof duration === 'string' ? parseFloat(duration) : duration;
+    
+    if (preferredUnit === 'ms') {
+      return showUnit ? `${durationMs}ms` : durationMs.toString();
+    }
+    
+    if (preferredUnit === 's') {
+      const seconds = (durationMs / 1000).toFixed(precision);
+      return showUnit ? `${seconds}s` : seconds;
+    }
+    
+    if (preferredUnit === 'min') {
+      const minutes = (durationMs / 60000).toFixed(precision);
+      return showUnit ? `${minutes}m` : minutes;
+    }
+    
+    if (preferredUnit === 'h') {
+      const hours = (durationMs / 3600000).toFixed(precision);
+      return showUnit ? `${hours}h` : hours;
+    }
+    
+    // Auto mode - choose best unit
+    if (durationMs < 1000) {
+      return showUnit ? `${durationMs}ms` : durationMs.toString();
+    } else if (durationMs < 60000) {
+      const seconds = (durationMs / 1000).toFixed(precision);
+      return showUnit ? `${seconds}s` : seconds;
+    } else if (durationMs < 3600000) {
+      const minutes = (durationMs / 60000).toFixed(precision);
+      return showUnit ? `${minutes}m` : minutes;
+    } else {
+      const hours = (durationMs / 3600000).toFixed(precision);
+      return showUnit ? `${hours}h` : hours;
+    }
   }
 
   /**

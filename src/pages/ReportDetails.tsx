@@ -89,18 +89,17 @@ const ReportDetails: React.FC = () => {
     }
   };
 
-  const exportReportAsJSON = () => {
-    if (!report) return;
+  const exportReportAsJSON = async () => {
+    if (!reportId) return;
     
-    const dataStr = JSON.stringify(report, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `report-${reportId}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast.success('JSON report downloaded successfully!');
+    try {
+      toast.loading('Generating JSON report...', { id: 'json-export' });
+      await reportService.exportToJSON(reportId);
+      toast.success('JSON report downloaded successfully!', { id: 'json-export' });
+    } catch (error: any) {
+      console.error('JSON export failed:', error);
+      toast.error(error.message || 'Failed to export JSON report', { id: 'json-export' });
+    }
   };
 
   const exportReportAsPDF = async () => {

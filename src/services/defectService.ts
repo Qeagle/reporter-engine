@@ -1,4 +1,5 @@
 import { apiService } from './apiService';
+import { validateSession, secureApiCall } from '../utils/sessionUtils';
 
 export interface FailureAnalysisSummary {
   totalFailures: number;
@@ -118,6 +119,9 @@ class FailureAnalysisService {
   }
 
   async autoClassify(projectId: number, filters: AnalysisFilters): Promise<void> {
+    // Validate session before attempting auto-classification
+    validateSession();
+    
     const params = new URLSearchParams();
     params.append('timeWindow', filters.timeWindow);
     if (filters.startDate) params.append('startDate', filters.startDate);
@@ -127,7 +131,10 @@ class FailureAnalysisService {
       filters.selectedRuns.forEach(run => params.append('runs', run));
     }
 
-    await apiService.post(`/analysis/projects/${projectId}/auto-classify?${params.toString()}`);
+    return await secureApiCall(
+      () => apiService.post(`/analysis/projects/${projectId}/auto-classify?${params.toString()}`),
+      'Auto-classification'
+    );
   }
 
   async reclassifyFailure(testCaseId: number, primaryClass: string, subClass: string): Promise<void> {

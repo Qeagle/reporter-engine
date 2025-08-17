@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   MessageSquare, AlertCircle, CheckCircle, Clock, Flag,
   Search, SortAsc, SortDesc, ChevronLeft, ChevronRight,
-  Activity, BarChart3, Edit2, Check, X
+  Activity, BarChart3, Edit2, Check, X, RotateCcw, 
+  Ban, MessageCircle, AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useProject } from '../contexts/ProjectContext';
@@ -91,6 +92,30 @@ const AnalysisActivity: React.FC = () => {
   // Edit state
   const [editingAnnotation, setEditingAnnotation] = useState<number | null>(null);
   const [editForm, setEditForm] = useState({ title: '', message: '' });
+  
+  // Status change modal state
+  const [statusChangeModal, setStatusChangeModal] = useState<{
+    isOpen: boolean;
+    annotationIds: number[];
+    newStatus: string;
+    comment: string;
+  }>({
+    isOpen: false,
+    annotationIds: [],
+    newStatus: '',
+    comment: ''
+  });
+  
+  // Bulk operation confirmation state
+  const [bulkConfirmModal, setBulkConfirmModal] = useState<{
+    isOpen: boolean;
+    operation: string;
+    count: number;
+  }>({
+    isOpen: false,
+    operation: '',
+    count: 0
+  });
 
   useEffect(() => {
     if (currentProject) {
@@ -178,7 +203,7 @@ const AnalysisActivity: React.FC = () => {
     }
   };
 
-  const updateAnnotationStatus = async (annotationId: number, status: string) => {
+  const updateAnnotationStatus = async (annotationId: number, status: string, comment?: string) => {
     try {
       const response = await fetch(`/api/annotations/annotations/${annotationId}/status`, {
         method: 'PUT',
@@ -186,7 +211,7 @@ const AnalysisActivity: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify({ status })
+        body: JSON.stringify({ status, comment })
       });
 
       if (response.ok) {
@@ -230,16 +255,59 @@ const AnalysisActivity: React.FC = () => {
       return;
     }
 
+    // Show confirmation modal for bulk operations
+    setBulkConfirmModal({
+      isOpen: true,
+      operation: status,
+      count: selectedAnnotations.length
+    });
+  };
+
+  const confirmBulkUpdate = async () => {
+    const { operation, count } = bulkConfirmModal;
+    
     try {
       const promises = selectedAnnotations.map(id => 
-        updateAnnotationStatus(id, status)
+        updateAnnotationStatus(id, operation)
       );
       
       await Promise.all(promises);
       setSelectedAnnotations([]);
-      toast.success(`Updated ${selectedAnnotations.length} annotations`);
+      setBulkConfirmModal({ isOpen: false, operation: '', count: 0 });
+      toast.success(`Updated ${count} annotations`);
     } catch (error) {
       toast.error('Failed to update annotations');
+    }
+  };
+
+  const handleStatusChangeWithComment = (annotationIds: number[], newStatus: string) => {
+    setStatusChangeModal({
+      isOpen: true,
+      annotationIds,
+      newStatus,
+      comment: ''
+    });
+  };
+
+  const confirmStatusChange = async () => {
+    const { annotationIds, newStatus, comment } = statusChangeModal;
+    
+    try {
+      const promises = annotationIds.map(id => 
+        updateAnnotationStatus(id, newStatus, comment)
+      );
+      
+      await Promise.all(promises);
+      setStatusChangeModal({ isOpen: false, annotationIds: [], newStatus: '', comment: '' });
+      if (annotationIds.length > 1) {
+        setSelectedAnnotations([]);
+      }
+      toast.success(annotationIds.length > 1 ? 
+        `Updated ${annotationIds.length} annotations` : 
+        'Status updated successfully'
+      );
+    } catch (error) {
+      toast.error('Failed to update status');
     }
   };
 
@@ -279,6 +347,8 @@ const AnalysisActivity: React.FC = () => {
       case 'in_progress': return 'bg-yellow-100 text-yellow-800';
       case 'resolved': return 'bg-green-100 text-green-800';
       case 'closed': return 'bg-gray-100 text-gray-800';
+      case 'reopened': return 'bg-orange-100 text-orange-800';
+      case 'invalid': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -419,6 +489,8 @@ const AnalysisActivity: React.FC = () => {
             <option value="in_progress">In Progress</option>
             <option value="resolved">Resolved</option>
             <option value="closed">Closed</option>
+            <option value="reopened">Reopened</option>
+            <option value="invalid">Invalid</option>
           </select>
 
           <select
@@ -462,36 +534,6 @@ const AnalysisActivity: React.FC = () => {
                 </option>
               ))}
           </select>
-
-          {/* Bulk Actions */}
-          {selectedAnnotations.length > 0 && (
-            <div className="flex items-center space-x-2 ml-auto">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {selectedAnnotations.length} selected
-              </span>
-              <button
-                onClick={() => bulkUpdateStatus('in_progress')}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-              >
-                <Clock className="w-4 h-4 mr-1" />
-                Mark In Progress
-              </button>
-              <button
-                onClick={() => bulkUpdateStatus('resolved')}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                <CheckCircle className="w-4 h-4 mr-1" />
-                Mark Resolved
-              </button>
-              <button
-                onClick={() => bulkUpdateStatus('closed')}
-                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-              >
-                <Flag className="w-4 h-4 mr-1" />
-                Mark Closed
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -594,6 +636,69 @@ const AnalysisActivity: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Action Buttons - Positioned above the table */}
+      {selectedAnnotations.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {selectedAnnotations.length} annotation{selectedAnnotations.length !== 1 ? 's' : ''} selected
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => handleStatusChangeWithComment(selectedAnnotations, 'in_progress')}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors"
+                title="Mark selected annotations as In Progress"
+              >
+                <Clock className="w-4 h-4 mr-1" />
+                In Progress
+              </button>
+              <button
+                onClick={() => handleStatusChangeWithComment(selectedAnnotations, 'resolved')}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors"
+                title="Mark selected annotations as Resolved"
+              >
+                <CheckCircle className="w-4 h-4 mr-1" />
+                Resolved
+              </button>
+              <button
+                onClick={() => handleStatusChangeWithComment(selectedAnnotations, 'closed')}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                title="Mark selected annotations as Closed"
+              >
+                <Flag className="w-4 h-4 mr-1" />
+                Closed
+              </button>
+              <button
+                onClick={() => handleStatusChangeWithComment(selectedAnnotations, 'reopened')}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
+                title="Reopen selected annotations"
+              >
+                <RotateCcw className="w-4 h-4 mr-1" />
+                Reopen
+              </button>
+              <button
+                onClick={() => handleStatusChangeWithComment(selectedAnnotations, 'invalid')}
+                className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                title="Mark selected annotations as Invalid"
+              >
+                <Ban className="w-4 h-4 mr-1" />
+                Invalid
+              </button>
+              <button
+                onClick={() => setSelectedAnnotations([])}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors"
+                title="Clear selection"
+              >
+                <X className="w-4 h-4 mr-1" />
+                Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
         {/* Annotations Table */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -770,13 +875,22 @@ const AnalysisActivity: React.FC = () => {
                       <td className="px-4 py-4">
                         <select
                           value={annotation.status}
-                          onChange={(e) => updateAnnotationStatus(annotation.id, e.target.value)}
+                          onChange={(e) => {
+                            const newStatus = e.target.value;
+                            if (['resolved', 'closed', 'reopened', 'invalid'].includes(newStatus)) {
+                              handleStatusChangeWithComment([annotation.id], newStatus);
+                            } else {
+                              updateAnnotationStatus(annotation.id, newStatus);
+                            }
+                          }}
                           className={`text-xs rounded-full px-3 py-1 border-0 focus:ring-2 focus:ring-blue-500 ${getStatusColor(annotation.status)}`}
                         >
                           <option value="open">Open</option>
                           <option value="in_progress">In Progress</option>
                           <option value="resolved">Resolved</option>
                           <option value="closed">Closed</option>
+                          <option value="reopened">Reopened</option>
+                          <option value="invalid">Invalid</option>
                         </select>
                       </td>
                       <td className="px-4 py-4">
@@ -884,6 +998,107 @@ const AnalysisActivity: React.FC = () => {
                 >
                   Next
                   <ChevronRight className="w-4 h-4 ml-1" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Status Change with Comment Modal */}
+        {statusChangeModal.isOpen && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  Change Status to "{statusChangeModal.newStatus.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}"
+                </h3>
+                <button
+                  onClick={() => setStatusChangeModal({ isOpen: false, annotationIds: [], newStatus: '', comment: '' })}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  {statusChangeModal.annotationIds.length === 1 
+                    ? 'You are about to change the status of 1 annotation.'
+                    : `You are about to change the status of ${statusChangeModal.annotationIds.length} annotations.`
+                  }
+                </p>
+                
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Add a comment (optional):
+                </label>
+                <textarea
+                  value={statusChangeModal.comment}
+                  onChange={(e) => setStatusChangeModal(prev => ({ ...prev, comment: e.target.value }))}
+                  placeholder="Add a note about this status change..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  onClick={() => setStatusChangeModal({ isOpen: false, annotationIds: [], newStatus: '', comment: '' })}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmStatusChange}
+                  className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <MessageCircle className="w-4 h-4 mr-2 inline-block" />
+                  Update Status
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Bulk Operation Confirmation Modal */}
+        {bulkConfirmModal.isOpen && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center">
+                  <AlertTriangle className="w-5 h-5 text-orange-500 mr-2" />
+                  Confirm Bulk Operation
+                </h3>
+                <button
+                  onClick={() => setBulkConfirmModal({ isOpen: false, operation: '', count: 0 })}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  You are about to update <strong>{bulkConfirmModal.count}</strong> annotation{bulkConfirmModal.count !== 1 ? 's' : ''} 
+                  to status <strong>"{bulkConfirmModal.operation.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}"</strong>.
+                </p>
+                <p className="text-sm text-orange-600 dark:text-orange-400 mt-2">
+                  <AlertTriangle className="w-4 h-4 inline mr-1" />
+                  This action will affect all selected annotations. Do you want to proceed?
+                </p>
+              </div>
+              
+              <div className="flex items-center justify-end space-x-3">
+                <button
+                  onClick={() => setBulkConfirmModal({ isOpen: false, operation: '', count: 0 })}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={confirmBulkUpdate}
+                  className="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                >
+                  Yes, Update All
                 </button>
               </div>
             </div>

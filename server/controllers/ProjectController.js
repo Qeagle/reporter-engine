@@ -69,7 +69,7 @@ class ProjectController {
 
   async createProject(req, res) {
     try {
-      const { name, description, type } = req.body;
+      const { name, description, type, settings } = req.body;
       const userId = req.user?.id || 1;
 
       if (!name) {
@@ -79,7 +79,10 @@ class ProjectController {
         });
       }
 
-      const existingProject = this.db.findProjectByKey(name);
+      // Generate a unique project key from the name
+      const projectKey = name.toUpperCase().replace(/[^A-Z0-9]/g, '_').substring(0, 20);
+      
+      const existingProject = this.db.findProjectByKey(projectKey);
       if (existingProject) {
         return res.status(409).json({
           success: false,
@@ -88,17 +91,28 @@ class ProjectController {
       }
 
       const projectData = {
+        key: projectKey,
         name,
         description: description || '',
         type: type || 'web',
-        owner_id: userId
+        settings: settings || {
+          retentionDays: 30,
+          autoCleanup: true,
+          notifications: true
+        }
       };
 
       const project = this.db.createProject(projectData);
 
+      // Add the user as the project owner
+      const ownerRole = this.db.findRoleByKey('OWNER');
+      if (ownerRole && userId) {
+        this.db.addProjectMember(project.id, userId, ownerRole.id);
+      }
+
       res.status(201).json({
         success: true,
-        project,
+        data: project,
         message: 'Project created successfully'
       });
     } catch (error) {

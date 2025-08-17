@@ -69,7 +69,15 @@ class AuthService {
   }
 
   logout(): void {
+    // Remove token from localStorage
     localStorage.removeItem('token');
+    
+    // Broadcast logout event to all tabs
+    window.localStorage.setItem('auth_event', JSON.stringify({
+      type: 'LOGOUT',
+      reason: 'USER_LOGOUT',
+      timestamp: Date.now()
+    }));
   }
 }
 

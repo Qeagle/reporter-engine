@@ -25,9 +25,20 @@ class ApiService {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
-          // Token might be expired, clear it but don't force redirect
-          // Let the auth context handle the navigation
+          // Token is invalid or expired - immediately trigger logout across all tabs
           localStorage.removeItem('token');
+          
+          // Broadcast session expiration to all tabs
+          window.localStorage.setItem('auth_event', JSON.stringify({
+            type: 'LOGOUT',
+            reason: 'SESSION_EXPIRED',
+            timestamp: Date.now()
+          }));
+          
+          // Dispatch custom event for immediate handling in current tab
+          window.dispatchEvent(new CustomEvent('auth:session-expired', {
+            detail: { reason: 'Invalid or expired token' }
+          }));
         }
         return Promise.reject(error);
       }

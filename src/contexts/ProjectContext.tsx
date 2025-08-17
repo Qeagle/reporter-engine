@@ -74,9 +74,9 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
     // Set current project after projects are loaded
     if (projects.length > 0 && !currentProject) {
       // Load saved project from localStorage or select first active project
-      const savedProjectId = localStorage.getItem('currentProjectId');
+      const savedProjectId = localStorage.getItem('selectedProjectId');
       if (savedProjectId) {
-        const savedProject = projects.find(p => p.id === savedProjectId);
+        const savedProject = projects.find(p => String(p.id) === String(savedProjectId));
         if (savedProject) {
           setCurrentProject(savedProject);
           return;
@@ -87,7 +87,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
       const activeProject = projects.find(p => p.status === 'active');
       if (activeProject) {
         setCurrentProject(activeProject);
-        localStorage.setItem('currentProjectId', activeProject.id);
+        localStorage.setItem('selectedProjectId', String(activeProject.id));
       }
     }
   }, [projects, currentProject]);
@@ -108,7 +108,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
 
   const handleSetCurrentProject = (project: Project) => {
     setCurrentProject(project);
-    localStorage.setItem('currentProjectId', project.id);
+    localStorage.setItem('selectedProjectId', String(project.id));
   };
 
   const createProject = async (projectData: Omit<Project, 'id' | 'createdAt'>): Promise<void> => {
@@ -151,7 +151,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
           handleSetCurrentProject(activeProject);
         } else {
           setCurrentProject(null);
-          localStorage.removeItem('currentProjectId');
+          localStorage.removeItem('selectedProjectId');
         }
       }
     } catch (error) {

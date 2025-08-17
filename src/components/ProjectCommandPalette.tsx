@@ -2,6 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, FolderOpen, Settings, Command, ArrowRight, Clock, Star } from 'lucide-react';
 import { projectService, type Project } from '../services/projectService';
 
+const PROJECT_STORAGE_KEY = 'selectedProjectId';
+
+const saveSelectedProject = (projectId: string): void => {
+  try {
+    localStorage.setItem(PROJECT_STORAGE_KEY, projectId);
+  } catch (error) {
+    console.warn('Failed to save selected project to localStorage:', error);
+  }
+};
+
 interface ProjectCommandPaletteProps {
   isOpen: boolean;
   onClose: () => void;
@@ -97,8 +107,10 @@ const ProjectCommandPalette: React.FC<ProjectCommandPaletteProps> = ({
   };
 
   const handleProjectSelect = (project: Project) => {
+    // Save selected project to localStorage (ensure consistent string format)
+    saveSelectedProject(String(project.id));
     onProjectChange(project);
-    saveRecentProject(project.id);
+    saveRecentProject(String(project.id));
     onClose();
   };
 
@@ -114,7 +126,7 @@ const ProjectCommandPalette: React.FC<ProjectCommandPaletteProps> = ({
   );
 
   const recentProjectsData = recentProjects
-    .map(id => projects.find(p => p.id === id))
+    .map(id => projects.find(p => String(p.id) === String(id)))
     .filter(Boolean) as Project[];
 
   const getProjectTypeColor = (type: string) => {

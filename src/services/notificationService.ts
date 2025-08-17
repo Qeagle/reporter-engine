@@ -1,4 +1,5 @@
 import React from 'react';
+import { io, Socket } from 'socket.io-client';
 
 export interface Notification {
   id: string;
@@ -19,53 +20,66 @@ export interface Notification {
 class NotificationService {
   private notifications: Notification[] = [];
   private subscribers: Array<(notifications: Notification[]) => void> = [];
-  private websocket: WebSocket | null = null;
+  private socket: Socket | null = null;
 
   constructor() {
     this.loadNotifications();
-    this.initializeWebSocket();
+    this.initializeSocket();
   }
 
-  private initializeWebSocket() {
+  private initializeSocket() {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      // Use the API URL for WebSocket connection
+      // Use Socket.IO instead of native WebSocket
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      const wsUrl = apiUrl.replace(/^http/, 'ws') + `/ws?token=${token}`;
-      console.log('NotificationService - Connecting to WebSocket:', wsUrl);
+      console.log('NotificationService - Connecting to Socket.IO:', apiUrl);
       
-      this.websocket = new WebSocket(wsUrl);
+      this.socket = io(apiUrl, {
+        auth: {
+          token: token
+        },
+        transports: ['websocket'],
+        autoConnect: true,
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: 5
+      });
 
-      this.websocket.onopen = () => {
-        console.log('Notification WebSocket connected');
-      };
+      this.socket.on('connect', () => {
+        console.log('Notification Socket.IO connected');
+      });
 
-      this.websocket.onmessage = (event) => {
+      this.socket.on('notification', (data) => {
         try {
-          const data = JSON.parse(event.data);
-          if (data.type === 'notification') {
-            this.addNotification(data.notification);
-          }
+          this.addNotification(data);
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+          console.error('Error processing notification:', error);
         }
-      };
+      });
 
-      this.websocket.onclose = () => {
-        console.log('Notification WebSocket disconnected');
-        // Attempt to reconnect after 5 seconds
-        setTimeout(() => {
-          this.initializeWebSocket();
-        }, 5000);
-      };
+      this.socket.on('disconnect', (reason) => {
+        console.log('Notification Socket.IO disconnected:', reason);
+      });
 
-      this.websocket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-      };
+      this.socket.on('connect_error', (error) => {
+        console.warn('Notification Socket.IO connection error:', error.message);
+        // Don't retry immediately on auth errors
+        if (error.message.includes('Authentication') || error.message.includes('token')) {
+          this.socket?.disconnect();
+        }
+      });
+
     } catch (error) {
-      console.error('Failed to initialize WebSocket:', error);
+      console.error('Error initializing notification socket:', error);
+    }
+  }
+
+  private cleanup() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
   }
 
@@ -334,9 +348,9 @@ class NotificationService {
   }
 
   destroy() {
-    if (this.websocket) {
-      this.websocket.close();
-      this.websocket = null;
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
     }
     this.subscribers = [];
   }

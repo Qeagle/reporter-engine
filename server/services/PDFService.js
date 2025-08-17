@@ -2,6 +2,59 @@ import { jsPDF } from 'jspdf';
 
 
 class PDFService {
+  constructor(options = {}) {
+    this.timeUnit = options.timeUnit || 'auto'; // 'auto', 'ms', 's', 'min', 'h'
+    this.timePrecision = options.timePrecision || 1;
+  }
+
+  /**
+   * Format duration for display with configurable time units
+   */
+  formatDuration(duration, options = {}) {
+    const { 
+      preferredUnit = this.timeUnit, 
+      precision = this.timePrecision,
+      showUnit = true 
+    } = options;
+    
+    if (!duration || duration === 0) return '0ms';
+    
+    // Convert duration to milliseconds if not already
+    const durationMs = typeof duration === 'string' ? parseFloat(duration) : duration;
+    
+    if (preferredUnit === 'ms') {
+      return showUnit ? `${durationMs}ms` : durationMs.toString();
+    }
+    
+    if (preferredUnit === 's') {
+      const seconds = (durationMs / 1000).toFixed(precision);
+      return showUnit ? `${seconds}s` : seconds;
+    }
+    
+    if (preferredUnit === 'min') {
+      const minutes = (durationMs / 60000).toFixed(precision);
+      return showUnit ? `${minutes}m` : minutes;
+    }
+    
+    if (preferredUnit === 'h') {
+      const hours = (durationMs / 3600000).toFixed(precision);
+      return showUnit ? `${hours}h` : hours;
+    }
+    
+    // Auto mode - choose best unit
+    if (durationMs < 1000) {
+      return showUnit ? `${durationMs}ms` : durationMs.toString();
+    } else if (durationMs < 60000) {
+      const seconds = (durationMs / 1000).toFixed(precision);
+      return showUnit ? `${seconds}s` : seconds;
+    } else if (durationMs < 3600000) {
+      const minutes = (durationMs / 60000).toFixed(precision);
+      return showUnit ? `${minutes}m` : minutes;
+    } else {
+      const hours = (durationMs / 3600000).toFixed(precision);
+      return showUnit ? `${hours}h` : hours;
+    }
+  }
   async generateReportPDF(report) {
     const doc = new jsPDF();
     let yPosition = 20;
@@ -77,14 +130,23 @@ class PDFService {
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     
+    // Check if this is a single test case report
+    const isSingleTestCase = report.tests && report.tests.length === 1;
+    
     const reportInfo = [
-      ['Test Suite:', report.testSuite || 'N/A'],
+      ['Test Suite:', report.test_suite || report.testSuite || report.environment || 'N/A'],
       ['Environment:', report.environment || 'N/A'],
-      ['Framework:', report.framework || 'N/A'],
-      ['Started:', new Date(report.startTime).toLocaleString()],
-      ['Finished:', new Date(report.endTime).toLocaleString()],
-      ['Duration:', `${report.duration || 0}ms`]
+      ['Framework:', report.framework || 'N/A']
     ];
+    
+    // Only add timing information for full test suite reports
+    if (!isSingleTestCase) {
+      reportInfo.push(
+        ['Started:', report.started_at ? new Date(report.started_at).toLocaleString() : (report.startTime ? new Date(report.startTime).toLocaleString() : 'N/A')],
+        ['Finished:', report.finished_at ? new Date(report.finished_at).toLocaleString() : (report.endTime ? new Date(report.endTime).toLocaleString() : 'N/A')],
+        ['Duration:', this.formatDuration(report.duration || (report.finished_at && report.started_at ? new Date(report.finished_at) - new Date(report.started_at) : 0))]
+      );
+    }
     
     reportInfo.forEach(([label, value]) => {
       doc.setFont('helvetica', 'bold');
@@ -158,6 +220,69 @@ class PDFService {
     
     yPosition += 25;
     
+    // Metrics Section (New Addition)
+    checkNewPage(60);
+    addHeaderBox('Test Metrics', [230, 126, 34]);
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    
+    // Calculate total duration from individual test cases or fall back to report duration
+    let totalTestDuration = 0;
+    if (report.tests && Array.isArray(report.tests)) {
+      totalTestDuration = report.tests.reduce((sum, test) => {
+        const testDuration = parseFloat(test.duration) || 0;
+        return sum + testDuration;
+      }, 0);
+    }
+    
+    // Use summary duration if available, otherwise calculate from timestamps, otherwise use test sum
+    let totalDuration = 0;
+    if (report.summary && report.summary.duration) {
+      totalDuration = parseFloat(report.summary.duration);
+    } else if (report.duration) {
+      totalDuration = parseFloat(report.duration);
+    } else if (report.finished_at && report.started_at) {
+      totalDuration = new Date(report.finished_at) - new Date(report.started_at);
+    } else {
+      totalDuration = totalTestDuration;
+    }
+    
+    const avgTestDuration = totalTestDuration > 0 && total > 0 ? Math.round(totalTestDuration / total) : 0;
+    const failureRate = total > 0 ? Math.round((failed / total) * 100) : 0;
+    const skipRate = total > 0 ? Math.round((skipped / total) * 100) : 0;
+    const testsPerSecond = total > 0 && totalDuration > 0 ? (total / (totalDuration / 1000)).toFixed(2) : '0';
+    
+    let metrics;
+    if (isSingleTestCase) {
+      // For single test case, show only relevant metrics
+      const testCaseDuration = report.tests[0]?.duration || totalTestDuration;
+      metrics = [
+        ['Test Duration:', this.formatDuration(testCaseDuration)],
+        ['Status:', report.tests[0]?.status || 'Unknown'],
+        ['Pass Rate:', `${passRate}%`]
+      ];
+    } else {
+      // For full test suite, show all metrics
+      metrics = [
+        ['Total Execution Time:', this.formatDuration(totalDuration) + ` (${Math.round(totalDuration / 1000)}s)`],
+        ['Average Test Duration:', this.formatDuration(avgTestDuration)],
+        ['Pass Rate:', `${passRate}%`],
+        ['Failure Rate:', `${failureRate}%`],
+        ['Skip Rate:', `${skipRate}%`]
+      ];
+    }
+    
+    metrics.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(label, 20, yPosition);
+      doc.setFont('helvetica', 'normal');
+      doc.text(value, 120, yPosition);
+      yPosition += 10;
+    });
+    
+    yPosition += 10;
+    
     // Test Cases Section
     checkNewPage(50);
     addHeaderBox('Test Cases Details', [155, 89, 182]);
@@ -188,7 +313,7 @@ class PDFService {
       const nameHeight = wrappedTestName.length * 10;
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text(`Duration: ${test.duration || 0}ms`, 20, yPosition + 3 + nameHeight + 5);
+      doc.text(`Duration: ${this.formatDuration(test.duration || 0)}`, 20, yPosition + 3 + nameHeight + 5);
       
       let errorHeight = 0;
       if (test.error) {
