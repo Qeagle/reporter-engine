@@ -1,19 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, FolderOpen, Settings } from 'lucide-react';
-
-interface Project {
-  id: string;
-  name: string;
-  description: string;
-  type: string;
-  status: 'active' | 'inactive';
-  createdAt: string;
-  settings: {
-    retentionDays: number;
-    autoCleanup: boolean;
-    notifications: boolean;
-  };
-}
+import { projectService, type Project } from '../services/projectService';
 
 interface ProjectSelectorProps {
   currentProject?: Project;
@@ -21,6 +8,25 @@ interface ProjectSelectorProps {
   onManageProjects: () => void;
   isAdmin?: boolean;
 }
+
+const PROJECT_STORAGE_KEY = 'selectedProjectId';
+
+const saveSelectedProject = (projectId: string): void => {
+  try {
+    localStorage.setItem(PROJECT_STORAGE_KEY, projectId);
+  } catch (error) {
+    console.warn('Failed to save selected project to localStorage:', error);
+  }
+};
+
+const getSelectedProject = (): string | null => {
+  try {
+    return localStorage.getItem(PROJECT_STORAGE_KEY);
+  } catch (error) {
+    console.warn('Failed to get selected project from localStorage:', error);
+    return null;
+  }
+};
 
 const ProjectSelector: React.FC<ProjectSelectorProps> = ({
   currentProject,
@@ -38,14 +44,28 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch('/api/projects');
-      const data = await response.json();
-      setProjects(data);
+      const projectsData = await projectService.getAllProjects();
+      setProjects(projectsData);
       
-      // If no current project selected, select the first active one
-      if (!currentProject && data.length > 0) {
-        const activeProject = data.find((p: Project) => p.status === 'active') || data[0];
-        onProjectChange(activeProject);
+      // Check if there's a saved project in localStorage
+      const savedProjectId = getSelectedProject();
+      let projectToSelect = null;
+      
+      if (savedProjectId) {
+        // Try to find the saved project (handle both string and number IDs)
+        projectToSelect = projectsData.find((p: Project) => 
+          String(p.id) === String(savedProjectId)
+        );
+      }
+      
+      // If no saved project or saved project not found, select the first active one
+      if (!projectToSelect && !currentProject && projectsData.length > 0) {
+        projectToSelect = projectsData.find((p: Project) => p.status === 'active') || projectsData[0];
+      }
+      
+      // Only change project if we found one and no current project is set
+      if (projectToSelect && !currentProject) {
+        onProjectChange(projectToSelect);
       }
     } catch (error) {
       console.error('Failed to fetch projects:', error);
@@ -55,6 +75,8 @@ const ProjectSelector: React.FC<ProjectSelectorProps> = ({
   };
 
   const handleProjectSelect = (project: Project) => {
+    // Save selected project to localStorage (ensure consistent string format)
+    saveSelectedProject(String(project.id));
     onProjectChange(project);
     setIsOpen(false);
   };

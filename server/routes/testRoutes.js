@@ -4,6 +4,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { fileURLToPath } from 'url';
 import TestController from '../controllers/TestController.js';
+import authMiddleware from '../middleware/authMiddleware.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,20 +44,59 @@ const upload = multer({
 
 const testController = new TestController();
 
-// Test execution endpoints
-router.post('/start', testController.startTestExecution.bind(testController));
-router.post('/update', testController.updateTestExecution.bind(testController));
-router.post('/complete', testController.completeTestExecution.bind(testController));
-router.post('/artifact', upload.single('file'), testController.uploadArtifact.bind(testController));
+// Test execution endpoints (require authentication)
+router.post('/start', authMiddleware, testController.startTestExecution.bind(testController));
+router.post('/update', authMiddleware, testController.updateTestExecution.bind(testController));
+router.post('/complete', authMiddleware, testController.completeTestExecution.bind(testController));
+router.post('/artifact', authMiddleware, upload.single('file'), testController.uploadArtifact.bind(testController));
 
 // Test step endpoints
-router.post('/step', testController.addTestStep.bind(testController));
+router.post('/step', authMiddleware, testController.addTestStep.bind(testController));
 
 // Batch operations
-router.post('/batch/results', testController.batchTestResults.bind(testController));
+router.post('/batch/results', authMiddleware, testController.batchTestResults.bind(testController));
 
-// Serve uploaded artifacts
+// Serve uploaded artifacts (public access)
 router.get('/artifacts/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, '../uploads', filename);
+  
+  // Set appropriate headers based on file type
+  const ext = path.extname(filename).toLowerCase();
+  const mimeTypes = {
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.gif': 'image/gif',
+    '.webp': 'image/webp',
+    '.mp4': 'video/mp4',
+    '.webm': 'video/webm',
+    '.avi': 'video/avi',
+    '.zip': 'application/zip',
+    '.json': 'application/json',
+    '.txt': 'text/plain'
+  };
+  
+  const mimeType = mimeTypes[ext] || 'application/octet-stream';
+  res.setHeader('Content-Type', mimeType);
+  
+  // For images and videos, allow inline viewing
+  if (mimeType.startsWith('image/') || mimeType.startsWith('video/')) {
+    res.setHeader('Content-Disposition', 'inline');
+  } else {
+    res.setHeader('Content-Disposition', `attachment; filename="${path.basename(filename)}"`);
+  }
+  
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error serving artifact:', err);
+      res.status(404).json({ error: 'Artifact not found' });
+    }
+  });
+});
+
+// Secure artifacts endpoint with authentication (for API access)
+router.get('/secure-artifacts/:filename', authMiddleware, (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(__dirname, '../uploads', filename);
   

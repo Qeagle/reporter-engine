@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiService } from '../services/apiService';
+import { useAuth } from './AuthContext';
 
 interface Project {
   id: string;
@@ -43,19 +45,38 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
   const [currentProject, setCurrentProject] = useState<Project | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    initializeProjects();
-  }, []);
+    // Only initialize projects when user is authenticated and auth is not loading
+    if (isAuthenticated && !authLoading) {
+      initializeProjects();
+    } else if (!authLoading && !isAuthenticated) {
+      // Clear projects when user is not authenticated
+      setProjects([]);
+      setCurrentProject(null);
+      setIsLoading(false);
+    }
+  }, [isAuthenticated, authLoading]);
 
   const initializeProjects = async () => {
     try {
+      setIsLoading(true);
       await refreshProjects();
-      
+    } catch (error) {
+      console.error('Failed to initialize projects:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Set current project after projects are loaded
+    if (projects.length > 0 && !currentProject) {
       // Load saved project from localStorage or select first active project
-      const savedProjectId = localStorage.getItem('currentProjectId');
+      const savedProjectId = localStorage.getItem('selectedProjectId');
       if (savedProjectId) {
-        const savedProject = projects.find(p => p.id === savedProjectId);
+        const savedProject = projects.find(p => String(p.id) === String(savedProjectId));
         if (savedProject) {
           setCurrentProject(savedProject);
           return;
@@ -66,23 +87,19 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
       const activeProject = projects.find(p => p.status === 'active');
       if (activeProject) {
         setCurrentProject(activeProject);
-        localStorage.setItem('currentProjectId', activeProject.id);
+        localStorage.setItem('selectedProjectId', String(activeProject.id));
       }
-    } catch (error) {
-      console.error('Failed to initialize projects:', error);
-    } finally {
-      setIsLoading(false);
     }
-  };
+  }, [projects, currentProject]);
 
   const refreshProjects = async (): Promise<void> => {
     try {
-      const response = await fetch('/api/projects');
-      if (!response.ok) {
-        throw new Error('Failed to fetch projects');
+      const data = await apiService.get('/projects');
+      if (data.success) {
+        setProjects(data.data || []);
+      } else {
+        throw new Error(data.error || 'Failed to fetch projects');
       }
-      const data = await response.json();
-      setProjects(data);
     } catch (error) {
       console.error('Failed to fetch projects:', error);
       throw error;
@@ -91,23 +108,12 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
 
   const handleSetCurrentProject = (project: Project) => {
     setCurrentProject(project);
-    localStorage.setItem('currentProjectId', project.id);
+    localStorage.setItem('selectedProjectId', String(project.id));
   };
 
   const createProject = async (projectData: Omit<Project, 'id' | 'createdAt'>): Promise<void> => {
     try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(projectData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create project');
-      }
-
+      await apiService.post('/projects', projectData);
       await refreshProjects();
     } catch (error) {
       console.error('Failed to create project:', error);
@@ -117,18 +123,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
 
   const updateProject = async (id: string, projectData: Partial<Project>): Promise<void> => {
     try {
-      const response = await fetch(`/api/projects/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(projectData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update project');
-      }
-
+      await apiService.put(`/projects/${id}`, projectData);
       await refreshProjects();
 
       // Update current project if it was the one being updated
@@ -146,14 +141,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
 
   const deleteProject = async (id: string): Promise<void> => {
     try {
-      const response = await fetch(`/api/projects/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete project');
-      }
-
+      await apiService.delete(`/projects/${id}`);
       await refreshProjects();
 
       // If the deleted project was the current one, select another
@@ -163,7 +151,7 @@ export const ProjectProvider: React.FC<ProjectProviderProps> = ({ children }) =>
           handleSetCurrentProject(activeProject);
         } else {
           setCurrentProject(null);
-          localStorage.removeItem('currentProjectId');
+          localStorage.removeItem('selectedProjectId');
         }
       }
     } catch (error) {

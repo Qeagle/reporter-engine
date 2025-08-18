@@ -1,19 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Edit2, Trash2, FolderOpen, BarChart3, Settings, Calendar } from 'lucide-react';
-
-interface Project {
-  id: string;
-  name: string;
-  description: string;
-  type: string;
-  status: 'active' | 'inactive';
-  createdAt: string;
-  settings: {
-    retentionDays: number;
-    autoCleanup: boolean;
-    notifications: boolean;
-  };
-}
+import { X, Plus, Edit2, FolderOpen, BarChart3, Settings, Calendar } from 'lucide-react';
+import { projectService, type Project } from '../services/projectService';
 
 interface ProjectManagementModalProps {
   isOpen: boolean;
@@ -52,39 +39,45 @@ const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({
 
   const fetchProjects = async () => {
     try {
-      const response = await fetch('/api/projects');
-      const data = await response.json();
-      setProjects(data);
+      const projectsData = await projectService.getAllProjects();
+      setProjects(projectsData);
+      
+      // Fetch stats for each project
+      const statsPromises = projectsData.map(async (project) => {
+        try {
+          const stats = await projectService.getProjectStats(project.id);
+          return { projectId: project.id, stats };
+        } catch (error) {
+          console.error(`Failed to fetch stats for project ${project.id}:`, error);
+          return { projectId: project.id, stats: { testRuns: 0 } };
+        }
+      });
+      
+      const statsResults = await Promise.all(statsPromises);
+      const statsMap = statsResults.reduce((acc, { projectId, stats }) => {
+        acc[projectId] = stats;
+        return acc;
+      }, {} as Record<string, any>);
+      
+      setProjectStats(statsMap);
     } catch (error) {
       console.error('Failed to fetch projects:', error);
     }
   };
 
   const fetchProjectStats = async () => {
-    try {
-      const response = await fetch('/api/projects/stats');
-      const data = await response.json();
-      setProjectStats(data);
-    } catch (error) {
-      console.error('Failed to fetch project stats:', error);
-    }
+    // This will be populated when we fetch projects
+    // Individual project stats are fetched in fetchProjects()
   };
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        await fetchProjects();
-        setShowCreateForm(false);
-        resetForm();
-        onProjectCreated();
-      }
+      await projectService.createProject(formData);
+      await fetchProjects();
+      setShowCreateForm(false);
+      resetForm();
+      onProjectCreated();
     } catch (error) {
       console.error('Failed to create project:', error);
     }
@@ -95,41 +88,30 @@ const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({
     if (!editingProject) return;
 
     try {
-      const response = await fetch(`/api/projects/${editingProject.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        await fetchProjects();
-        setEditingProject(null);
-        resetForm();
-        onProjectCreated();
-      }
+      await projectService.updateProject(editingProject.id, formData);
+      await fetchProjects();
+      setEditingProject(null);
+      resetForm();
+      onProjectCreated();
     } catch (error) {
       console.error('Failed to update project:', error);
     }
   };
 
-  const handleDeleteProject = async (projectId: string) => {
-    if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
-      return;
-    }
+  // Delete project function disabled to avoid potential data integrity issues
+  // const handleDeleteProject = async (projectId: string) => {
+  //   if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+  //     return;
+  //   }
 
-    try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        await fetchProjects();
-        onProjectCreated();
-      }
-    } catch (error) {
-      console.error('Failed to delete project:', error);
-    }
-  };
+  //   try {
+  //     await projectService.deleteProject(projectId);
+  //     await fetchProjects();
+  //     onProjectCreated();
+  //   } catch (error) {
+  //     console.error('Failed to delete project:', error);
+  //   }
+  // };
 
   const resetForm = () => {
     setFormData({
@@ -229,12 +211,13 @@ const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({
                           >
                             <Edit2 className="w-4 h-4 text-gray-500" />
                           </button>
-                          <button
+                          {/* Delete button disabled to avoid potential data integrity issues */}
+                          {/* <button
                             onClick={() => handleDeleteProject(project.id)}
                             className="p-1 hover:bg-gray-100 rounded transition-colors"
                           >
                             <Trash2 className="w-4 h-4 text-red-500" />
-                          </button>
+                          </button> */}
                         </div>
                       </div>
 
@@ -258,11 +241,15 @@ const ProjectManagementModal: React.FC<ProjectManagementModalProps> = ({
                       <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
                         <div className="flex items-center space-x-1">
                           <BarChart3 className="w-3 h-3" />
-                          <span>{stats.totalReports || 0} reports</span>
+                          <span>{stats.testRuns || 0} reports</span>
                         </div>
                         <div className="flex items-center space-x-1">
                           <Calendar className="w-3 h-3" />
-                          <span>{new Date(project.createdAt).toLocaleDateString()}</span>
+                          <span>{
+                            project.createdAt || project.created_at 
+                              ? new Date(project.createdAt || project.created_at!).toLocaleDateString()
+                              : 'Unknown date'
+                          }</span>
                         </div>
                       </div>
                     </div>

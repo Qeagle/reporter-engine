@@ -16,25 +16,41 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   useEffect(() => {
     if (isAuthenticated) {
-      const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:3001');
+      const newSocket = io(import.meta.env.VITE_API_URL || 'http://localhost:3001', {
+        transports: ['websocket'],
+        upgrade: false,
+        rememberUpgrade: false,
+        autoConnect: true,
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionAttempts: 5,
+        timeout: 5000,
+        forceNew: false
+      });
       
       newSocket.on('connect', () => {
-        console.log('WebSocket connected');
+        console.log('App WebSocket connected to backend');
         setConnected(true);
       });
 
-      newSocket.on('disconnect', () => {
-        console.log('WebSocket disconnected');
+      newSocket.on('disconnect', (reason) => {
+        console.log('App WebSocket disconnected:', reason);
         setConnected(false);
+      });
+
+      newSocket.on('connect_error', (error) => {
+        console.warn('App WebSocket connection error:', error.message);
       });
 
       setSocket(newSocket);
 
       return () => {
+        console.log('Cleaning up App WebSocket connection');
         newSocket.close();
       };
     } else {
       if (socket) {
+        console.log('Closing App WebSocket due to logout');
         socket.close();
         setSocket(null);
         setConnected(false);

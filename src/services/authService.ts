@@ -31,9 +31,10 @@ class AuthService {
     });
   }
 
-  async login(username: string, password: string): Promise<LoginResponse> {
+  async login(email: string, password: string): Promise<LoginResponse> {
     try {
-      const response = await this.api.post('/login', { username, password });
+      // Note: Backend expects 'username' field, not 'email'
+      const response = await this.api.post('/login', { username: email, password });
       if (response.data.success) {
         return response.data;
       }
@@ -68,7 +69,15 @@ class AuthService {
   }
 
   logout(): void {
+    // Remove token from localStorage
     localStorage.removeItem('token');
+    
+    // Broadcast logout event to all tabs
+    window.localStorage.setItem('auth_event', JSON.stringify({
+      type: 'LOGOUT',
+      reason: 'USER_LOGOUT',
+      timestamp: Date.now()
+    }));
   }
 }
 

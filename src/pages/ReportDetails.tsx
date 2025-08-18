@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Download, MessageSquare, BarChart3, Brain } from 'lucide-react';
+import { ArrowLeft, MessageSquare, BarChart3, Brain, Download, FileText, File } from 'lucide-react';
 import { reportService } from '../services/reportService';
 import { useWebSocket } from '../contexts/WebSocketContext';
 import ReportSummary from '../components/ReportDetails/ReportSummary';
@@ -9,6 +9,7 @@ import ReportMetrics from '../components/ReportDetails/ReportMetrics';
 import AnnotationPanel from '../components/ReportDetails/AnnotationPanel';
 import AIInsights from '../components/AIInsights/AIInsights';
 import RunSummaryInsights from '../components/AIInsights/RunSummaryInsights';
+import ExportModal from '../components/ReportDetails/ExportModal';
 import toast from 'react-hot-toast';
 
 const ReportDetails: React.FC = () => {
@@ -18,6 +19,8 @@ const ReportDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('summary');
   const [showAnnotations, setShowAnnotations] = useState(false);
+  const [exportingHTML, setExportingHTML] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const { socket } = useWebSocket();
 
   useEffect(() => {
@@ -86,15 +89,29 @@ const ReportDetails: React.FC = () => {
     }
   };
 
-  const handleExportPDF = async () => {
+  const exportReportAsJSON = async () => {
     if (!reportId) return;
     
     try {
+      toast.loading('Generating JSON report...', { id: 'json-export' });
+      await reportService.exportToJSON(reportId);
+      toast.success('JSON report downloaded successfully!', { id: 'json-export' });
+    } catch (error: any) {
+      console.error('JSON export failed:', error);
+      toast.error(error.message || 'Failed to export JSON report', { id: 'json-export' });
+    }
+  };
+
+  const exportReportAsPDF = async () => {
+    if (!reportId) return;
+    
+    try {
+      toast.loading('Generating PDF report...', { id: 'pdf-export' });
       await reportService.exportToPDF(reportId);
-      toast.success('Report exported successfully');
-    } catch (error) {
-      console.error('Error exporting report:', error);
-      toast.error('Failed to export report');
+      toast.success('PDF report downloaded successfully!', { id: 'pdf-export' });
+    } catch (error: any) {
+      console.error('PDF export failed:', error);
+      toast.error(error.message || 'Failed to export PDF report', { id: 'pdf-export' });
     }
   };
 
@@ -157,6 +174,30 @@ const ReportDetails: React.FC = () => {
 
         <div className="flex items-center space-x-2">
           <button
+            onClick={exportReportAsPDF}
+            className="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
+            title="Export as PDF - Complete test report with formatted layout"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Export PDF
+          </button>
+          <button
+            onClick={exportReportAsJSON}
+            className="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+            title="Export as JSON - Raw test data for programmatic use"
+          >
+            <File className="w-4 h-4 mr-2" />
+            Export JSON
+          </button>
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="inline-flex items-center px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+            title="Export as HTML - Interactive web report with options"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Export HTML
+          </button>
+          <button
             onClick={() => setShowAnnotations(!showAnnotations)}
             className="inline-flex items-center px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
           >
@@ -166,18 +207,8 @@ const ReportDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Report Summary with AI Insights */}
-      <div className="space-y-4">
-        <ReportSummary report={report} />
-        {report.stats && (report.stats.failed > 0 || report.stats.errors > 0) && (
-          <RunSummaryInsights
-            reportId={reportId!}
-            totalTests={report.stats.total || 0}
-            failedTests={(report.stats.failed || 0) + (report.stats.errors || 0)}
-            onViewFullAnalysis={() => setActiveTab('ai-insights')}
-          />
-        )}
-      </div>
+      {/* Report Summary */}
+      <ReportSummary report={report} />
 
       {/* Tabs */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
@@ -204,14 +235,17 @@ const ReportDetails: React.FC = () => {
           {activeTab === 'summary' && (
             <div className="space-y-6">
               <ReportSummary report={report} />
-              <RunSummaryInsights
-                reportId={reportId!}
-                totalTests={report.stats?.total || 0}
-                failedTests={(report.stats?.failed || 0) + (report.stats?.errors || 0)}
-              />
+              {report.stats && (report.stats.failed > 0 || report.stats.errors > 0) && (
+                <RunSummaryInsights
+                  reportId={reportId!}
+                  totalTests={report.stats.total || 0}
+                  failedTests={(report.stats.failed || 0) + (report.stats.errors || 0)}
+                  onViewFullAnalysis={() => setActiveTab('ai-insights')}
+                />
+              )}
             </div>
           )}
-          {activeTab === 'tests' && <TestsList tests={report.tests} />}
+          {activeTab === 'tests' && <TestsList tests={report.tests} reportId={reportId!} />}
           {activeTab === 'ai-insights' && <AIInsights reportId={reportId!} />}
           {activeTab === 'metrics' && <ReportMetrics metrics={metrics} />}
         </div>
@@ -224,6 +258,14 @@ const ReportDetails: React.FC = () => {
           onClose={() => setShowAnnotations(false)}
         />
       )}
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        reportId={reportId!}
+        reportName={report?.test_suite}
+      />
     </div>
   );
 };

@@ -1,0 +1,292 @@
+{
+  "id": "4027e662-dfe5-49d0-96f2-c047af788077",
+  "testSuite": "Login",
+  "environment": "development",
+  "framework": "Playwright",
+  "tags": [
+    "salesforce",
+    "e2e",
+    "playwright",
+    "automation"
+  ],
+  "metadata": {
+    "browser": "chromium",
+    "parallel": true,
+    "workers": 4,
+    "version": "1.0.0"
+  },
+  "status": "completed",
+  "startTime": "2025-08-09T12:57:49.145Z",
+  "tests": [
+    {
+      "name": "chromium › smoke/login.spec.ts › @smoke Salesforce Login › Login with valid credentials should show App Launcher button",
+      "status": "passed",
+      "duration": 7612,
+      "startTime": "2025-08-09T12:57:53.799Z",
+      "endTime": "2025-08-09T12:58:01.411Z",
+      "errorMessage": null,
+      "stackTrace": null,
+      "steps": [
+        {
+          "name": "Before Hooks",
+          "status": "passed",
+          "duration": 7414,
+          "error": null,
+          "category": "hook",
+          "order": 1
+        },
+        {
+          "name": "Wait for selector locator('input#username')",
+          "status": "passed",
+          "duration": 29,
+          "error": null,
+          "category": "pw:api",
+          "order": 2
+        },
+        {
+          "name": "Fill \"naveen.kumar187@agentforce.com\" locator('input#username')",
+          "status": "passed",
+          "duration": 38,
+          "error": null,
+          "category": "pw:api",
+          "order": 3
+        },
+        {
+          "name": "Wait for selector locator('input#password')",
+          "status": "passed",
+          "duration": 7,
+          "error": null,
+          "category": "pw:api",
+          "order": 4
+        },
+        {
+          "name": "Fill \"Sales@123\" locator('input#password')",
+          "status": "passed",
+          "duration": 16,
+          "error": null,
+          "category": "pw:api",
+          "order": 5
+        },
+        {
+          "name": "Wait for selector locator('input#Login')",
+          "status": "passed",
+          "duration": 8,
+          "error": null,
+          "category": "pw:api",
+          "order": 6
+        },
+        {
+          "name": "Click locator('input#Login')",
+          "status": "passed",
+          "duration": 2296,
+          "error": null,
+          "category": "pw:api",
+          "order": 7
+        },
+        {
+          "name": "Is visible locator('button[title=\"App Launcher\"]')",
+          "status": "passed",
+          "duration": 15,
+          "error": null,
+          "category": "pw:api",
+          "order": 8
+        },
+        {
+          "name": "After Hooks",
+          "status": "passed",
+          "duration": 1873,
+          "error": null,
+          "category": "hook",
+          "order": 9
+        }
+      ],
+      "artifacts": [
+        {
+          "id": "e8ecbcda-5dda-4f19-a93e-8b3862ced47d",
+          "type": "screenshot",
+          "filename": "test-finished-1.png",
+          "url": "http://localhost:3001/api/tests/artifacts/e869e337-a5e4-4f70-89f5-2dc0833a2b22-test-finished-1.png",
+          "uploadedAt": "2025-08-09T12:58:01.451Z"
+        },
+        {
+          "id": "1513dfc7-a73c-4cb3-b246-a26bb6e85d9f",
+          "type": "video",
+          "filename": "video.webm",
+          "url": "http://localhost:3001/api/tests/artifacts/f6e95e3d-6e71-41ee-a3a9-6f2fd50e38cb-video.webm",
+          "uploadedAt": "2025-08-09T12:58:01.459Z"
+        },
+        {
+          "id": "bab0363a-1618-47d0-94ad-8a9448332b08",
+          "type": "trace",
+          "filename": "trace.zip",
+          "url": "http://localhost:3001/api/tests/artifacts/ae5a5a97-f2e5-495d-b415-ac74b2e8d95f-trace.zip",
+          "uploadedAt": "2025-08-09T12:58:01.472Z"
+        }
+      ],
+      "annotations": [
+        {
+          "type": "author",
+          "description": "Babu"
+        }
+      ],
+      "metadata": {
+        "file": "/Users/babu/Desktop/playwright-salesforce/tests/smoke/login.spec.ts",
+        "line": 14,
+        "column": 7,
+        "retries": 0,
+        "parallelIndex": 0,
+        "author": "Babu"
+      }
+    },
+    {
+      "name": "chromium › smoke/login.spec.ts › @smoke Salesforce Login › Login with invalid credentials should show login error",
+      "status": "passed",
+      "duration": 3649,
+      "startTime": "2025-08-09T12:58:01.470Z",
+      "endTime": "2025-08-09T12:58:05.119Z",
+      "errorMessage": null,
+      "stackTrace": null,
+      "steps": [
+        {
+          "name": "Before Hooks",
+          "status": "passed",
+          "duration": 2684,
+          "error": null,
+          "category": "hook",
+          "order": 1
+        },
+        {
+          "name": "Wait for selector locator('input#username')",
+          "status": "passed",
+          "duration": 14,
+          "error": null,
+          "category": "pw:api",
+          "order": 2
+        },
+        {
+          "name": "Fill \"invaliduser\" locator('input#username')",
+          "status": "passed",
+          "duration": 9,
+          "error": null,
+          "category": "pw:api",
+          "order": 3
+        },
+        {
+          "name": "Wait for selector locator('input#password')",
+          "status": "passed",
+          "duration": 3,
+          "error": null,
+          "category": "pw:api",
+          "order": 4
+        },
+        {
+          "name": "Fill \"wrongpass\" locator('input#password')",
+          "status": "passed",
+          "duration": 34,
+          "error": null,
+          "category": "pw:api",
+          "order": 5
+        },
+        {
+          "name": "Wait for selector locator('input#Login')",
+          "status": "passed",
+          "duration": 4,
+          "error": null,
+          "category": "pw:api",
+          "order": 6
+        },
+        {
+          "name": "Click locator('input#Login')",
+          "status": "passed",
+          "duration": 267,
+          "error": null,
+          "category": "pw:api",
+          "order": 7
+        },
+        {
+          "name": "Wait for selector locator('#error')",
+          "status": "passed",
+          "duration": 448,
+          "error": null,
+          "category": "pw:api",
+          "order": 8
+        },
+        {
+          "name": "Get text content locator('#error')",
+          "status": "passed",
+          "duration": 5,
+          "error": null,
+          "category": "pw:api",
+          "order": 9
+        },
+        {
+          "name": "toContain",
+          "status": "passed",
+          "duration": 1,
+          "error": null,
+          "category": "expect",
+          "order": 10
+        },
+        {
+          "name": "After Hooks",
+          "status": "passed",
+          "duration": 172,
+          "error": null,
+          "category": "hook",
+          "order": 11
+        }
+      ],
+      "artifacts": [
+        {
+          "id": "0a18a04f-7e32-4d78-ae05-6aa4fa11f3bc",
+          "type": "screenshot",
+          "filename": "test-finished-1.png",
+          "url": "http://localhost:3001/api/tests/artifacts/9b15fa94-c906-4f4b-b581-559a7ea035d7-test-finished-1.png",
+          "uploadedAt": "2025-08-09T12:58:05.136Z"
+        },
+        {
+          "id": "05b394ef-ca63-4d1d-b8ad-d1d23bc18963",
+          "type": "video",
+          "filename": "video.webm",
+          "url": "http://localhost:3001/api/tests/artifacts/b4aaf7f7-b7bf-4c28-b1d7-fdcdc766e055-video.webm",
+          "uploadedAt": "2025-08-09T12:58:05.140Z"
+        },
+        {
+          "id": "75eaf689-1f39-47f6-a5c2-d9f040fafe55",
+          "type": "trace",
+          "filename": "trace.zip",
+          "url": "http://localhost:3001/api/tests/artifacts/a86040c2-0cec-4742-9b31-3dd6856973b7-trace.zip",
+          "uploadedAt": "2025-08-09T12:58:05.154Z"
+        }
+      ],
+      "annotations": [
+        {
+          "type": "author",
+          "description": "Babu"
+        }
+      ],
+      "metadata": {
+        "file": "/Users/babu/Desktop/playwright-salesforce/tests/smoke/login.spec.ts",
+        "line": 22,
+        "column": 7,
+        "retries": 0,
+        "parallelIndex": 0,
+        "author": "Babu"
+      }
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 16486,
+    "passRate": 100,
+    "startTime": "2025-08-09T12:57:49.118Z",
+    "endTime": "2025-08-09T12:58:05.631Z"
+  },
+  "endTime": "2025-08-09T12:58:05.631Z",
+  "projectId": "playwright-salesforce-default",
+  "projectName": "Salesforce Playwright Tests",
+  "projectType": "playwright"
+}

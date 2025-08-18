@@ -1,0 +1,67 @@
+{
+  "id": "5d5903d5-6535-41b3-acac-d6e9ee4a710c",
+  "testSuite": "LeafTaps Test Suite",
+  "environment": "local",
+  "framework": "testng-selenium",
+  "tags": [
+    "smoke",
+    "regression"
+  ],
+  "metadata": {
+    "author": "LeafTaps Framework",
+    "browser": "chrome",
+    "version": "1.0.0"
+  },
+  "projectId": "selenium-leaftaps",
+  "projectName": "LeafTaps Selenium Tests",
+  "projectType": "selenium",
+  "status": "completed",
+  "startTime": "2025-08-10T05:05:13.137Z",
+  "tests": [
+    {
+      "name": "CreateLead",
+      "status": "passed",
+      "duration": 34063,
+      "startTime": "2025-08-10T10:35:13.180017",
+      "endTime": "2025-08-10T10:35:47.243052",
+      "steps": [],
+      "artifacts": [],
+      "annotations": [],
+      "metadata": {
+        "environment": "local",
+        "browser": "chrome",
+        "projectType": "selenium",
+        "projectName": "LeafTaps Selenium Tests",
+        "projectId": "selenium-leaftaps",
+        "timestamp": "2025-08-10T10:35:47.243062"
+      }
+    },
+    {
+      "name": "runLogin",
+      "status": "passed",
+      "duration": 10714,
+      "startTime": "2025-08-10T10:35:36.326669",
+      "endTime": "2025-08-10T10:35:47.040764",
+      "steps": [],
+      "artifacts": [],
+      "annotations": [],
+      "metadata": {
+        "environment": "local",
+        "browser": "chrome",
+        "projectType": "selenium",
+        "projectName": "LeafTaps Selenium Tests",
+        "projectId": "selenium-leaftaps",
+        "timestamp": "2025-08-10T10:35:47.040776"
+      }
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 34108,
+    "passRate": 100
+  },
+  "endTime": "2025-08-10T10:35:47.245175"
+}

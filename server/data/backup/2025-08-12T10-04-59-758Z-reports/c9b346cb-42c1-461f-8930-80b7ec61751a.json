@@ -1,0 +1,266 @@
+{
+  "id": "c9b346cb-42c1-461f-8930-80b7ec61751a",
+  "testSuite": "LeafTaps Test Suite",
+  "environment": "local",
+  "framework": "testng-selenium",
+  "tags": [
+    "smoke",
+    "regression"
+  ],
+  "metadata": {
+    "author": "LeafTaps Framework",
+    "browser": "chrome",
+    "version": "1.0.0"
+  },
+  "projectId": "selenium-leaftaps",
+  "projectName": "LeafTaps Selenium Tests",
+  "projectType": "selenium",
+  "status": "completed",
+  "startTime": "2025-08-10T05:32:29.572Z",
+  "tests": [
+    {
+      "name": "runLogin",
+      "status": "passed",
+      "duration": 10538,
+      "startTime": "2025-08-10T11:02:49.685997",
+      "endTime": "2025-08-10T11:03:00.224032",
+      "steps": [
+        {
+          "id": "27504707-ae25-46a5-8a37-411573d9b7d8",
+          "name": "Demosalesmanager username is entered successfully",
+          "status": "pass",
+          "duration": 324,
+          "timestamp": "2025-08-10T05:32:34.938Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/873489296.jpg",
+          "description": "Demosalesmanager username is entered successfully"
+        },
+        {
+          "id": "2776ba65-9cea-4d7c-a896-0a522b230564",
+          "name": "crmsfa password is entered successfully",
+          "status": "pass",
+          "duration": 261,
+          "timestamp": "2025-08-10T05:32:35.234Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/422007440.jpg",
+          "description": "crmsfa password is entered successfully"
+        },
+        {
+          "id": "158c4047-a7a6-4e8a-8cf4-6009aab2212b",
+          "name": "Login button is clicked successfully",
+          "status": "pass",
+          "duration": 297,
+          "timestamp": "2025-08-10T05:32:36.178Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/835039366.jpg",
+          "description": "Login button is clicked successfully"
+        },
+        {
+          "id": "4cddc575-7d86-4ff0-9df6-f46ca4349d38",
+          "name": "CRM/SFA link is clicked",
+          "status": "pass",
+          "duration": 194,
+          "timestamp": "2025-08-10T05:32:37.945Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/785496089.jpg",
+          "description": "CRM/SFA link is clicked"
+        },
+        {
+          "id": "12c357c8-06b4-4b6d-8dfb-2010ebfe5750",
+          "name": "Leads link is clicked",
+          "status": "pass",
+          "duration": 205,
+          "timestamp": "2025-08-10T05:32:39.203Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/86823733.jpg",
+          "description": "Leads link is clicked"
+        },
+        {
+          "id": "d86098b4-ca3a-4a05-a8cb-49e951b7df0f",
+          "name": "Create Lead link is clicked",
+          "status": "pass",
+          "duration": 196,
+          "timestamp": "2025-08-10T05:32:40.294Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/427543013.jpg",
+          "description": "Create Lead link is clicked"
+        },
+        {
+          "id": "8c4227f1-27ab-4225-807a-0cd17825246c",
+          "name": "Testleaf company name is entered successfully",
+          "status": "pass",
+          "duration": 194,
+          "timestamp": "2025-08-10T05:32:40.526Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/331965093.jpg",
+          "description": "Testleaf company name is entered successfully"
+        },
+        {
+          "id": "5c5a4b33-23a7-4741-8431-ae9b96d53078",
+          "name": "Babu first name is entered successfully",
+          "status": "pass",
+          "duration": 153,
+          "timestamp": "2025-08-10T05:32:40.709Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/32231280.jpg",
+          "description": "Babu first name is entered successfully"
+        },
+        {
+          "id": "2e0a34a2-5b9e-4986-9b39-2e2dbe71c54d",
+          "name": "M last name is entered successfully",
+          "status": "pass",
+          "duration": 154,
+          "timestamp": "2025-08-10T05:32:40.894Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/478488253.jpg",
+          "description": "M last name is entered successfully"
+        },
+        {
+          "id": "94d7a151-8952-4c01-ad6e-2f587fe0427e",
+          "name": "Conference (source) is selected successfully",
+          "status": "pass",
+          "duration": 168,
+          "timestamp": "2025-08-10T05:32:41.096Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/149163023.jpg",
+          "description": "Conference (source) is selected successfully"
+        },
+        {
+          "id": "7f307fc0-0893-49d1-93f3-9118ad751384",
+          "name": "Create Lead button is clicked successfully",
+          "status": "pass",
+          "duration": 209,
+          "timestamp": "2025-08-10T05:32:45.046Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/174244126.jpg",
+          "description": "Create Lead button is clicked successfully"
+        },
+        {
+          "id": "21946627-c476-4494-bd97-fccfe86e0730",
+          "name": "Babu is matching with first name",
+          "status": "pass",
+          "duration": 209,
+          "timestamp": "2025-08-10T05:32:45.265Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/494066142.jpg",
+          "description": "Babu is matching with first name"
+        },
+        {
+          "id": "ba693295-06d9-4cef-971a-0400d64db874",
+          "name": "Demosalesmanager username is entered successfully",
+          "status": "pass",
+          "duration": 297,
+          "timestamp": "2025-08-10T05:32:50.074Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/356403625.jpg",
+          "description": "Demosalesmanager username is entered successfully"
+        },
+        {
+          "id": "4239616a-734a-4897-8089-fb2add6e5d02",
+          "name": "crmsfa password is entered successfully",
+          "status": "pass",
+          "duration": 274,
+          "timestamp": "2025-08-10T05:32:50.377Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/174768084.jpg",
+          "description": "crmsfa password is entered successfully"
+        },
+        {
+          "id": "76ca65bb-c297-4f58-a57d-3c9e0a924736",
+          "name": "Login button is clicked successfully",
+          "status": "pass",
+          "duration": 319,
+          "timestamp": "2025-08-10T05:32:51.331Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/276181271.jpg",
+          "description": "Login button is clicked successfully"
+        },
+        {
+          "id": "e8e2cb5d-40ef-4a49-8ac6-a4c236189f6d",
+          "name": "CRM/SFA link is clicked",
+          "status": "pass",
+          "duration": 203,
+          "timestamp": "2025-08-10T05:32:52.999Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/151195019.jpg",
+          "description": "CRM/SFA link is clicked"
+        },
+        {
+          "id": "6df4a337-af55-40c7-890d-4960a4908b57",
+          "name": "Leads link is clicked",
+          "status": "pass",
+          "duration": 200,
+          "timestamp": "2025-08-10T05:32:54.207Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/522749789.jpg",
+          "description": "Leads link is clicked"
+        },
+        {
+          "id": "a6b52ded-5116-4ed4-b7b9-93b095af4fb6",
+          "name": "Create Lead link is clicked",
+          "status": "pass",
+          "duration": 208,
+          "timestamp": "2025-08-10T05:32:55.374Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/736466172.jpg",
+          "description": "Create Lead link is clicked"
+        },
+        {
+          "id": "45c1bee0-3333-49a2-9e79-0a1ec841dd80",
+          "name": "Testleaf company name is entered successfully",
+          "status": "pass",
+          "duration": 188,
+          "timestamp": "2025-08-10T05:32:55.596Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/738131403.jpg",
+          "description": "Testleaf company name is entered successfully"
+        },
+        {
+          "id": "8a0afcb4-bd40-44a7-b61c-0347adbb8747",
+          "name": "Hari first name is entered successfully",
+          "status": "pass",
+          "duration": 167,
+          "timestamp": "2025-08-10T05:32:55.793Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/97574731.jpg",
+          "description": "Hari first name is entered successfully"
+        },
+        {
+          "id": "be86281c-85ec-4d17-95af-2eeff00370ec",
+          "name": "R last name is entered successfully",
+          "status": "pass",
+          "duration": 167,
+          "timestamp": "2025-08-10T05:32:55.991Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/351748966.jpg",
+          "description": "R last name is entered successfully"
+        },
+        {
+          "id": "3be3c099-d9da-4dfd-9b78-76efd949d994",
+          "name": "Conference (source) is selected successfully",
+          "status": "pass",
+          "duration": 155,
+          "timestamp": "2025-08-10T05:32:56.176Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/646408158.jpg",
+          "description": "Conference (source) is selected successfully"
+        },
+        {
+          "id": "a91b1c89-e63f-482e-91ad-57c5085c4adf",
+          "name": "Create Lead button is clicked successfully",
+          "status": "pass",
+          "duration": 212,
+          "timestamp": "2025-08-10T05:33:00.006Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/341654527.jpg",
+          "description": "Create Lead button is clicked successfully"
+        },
+        {
+          "id": "6f2af8b7-384e-4912-96dd-c1ca6d3d0716",
+          "name": "Hari is matching with first name",
+          "status": "pass",
+          "duration": 207,
+          "timestamp": "2025-08-10T05:33:00.223Z",
+          "screenshot": "reports/10-Aug-2025 11-02-29/images/873108806.jpg",
+          "description": "Hari is matching with first name"
+        }
+      ],
+      "artifacts": [],
+      "annotations": [],
+      "metadata": {
+        "environment": "local",
+        "browser": "chrome",
+        "projectType": "selenium",
+        "projectName": "LeafTaps Selenium Tests",
+        "projectId": "selenium-leaftaps",
+        "timestamp": "2025-08-10T11:03:00.224042"
+      }
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 30798,
+    "passRate": 100
+  },
+  "endTime": "2025-08-10T11:03:00.370151"
+}

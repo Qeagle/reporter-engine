@@ -2,12 +2,16 @@ import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import DatabaseService from './DatabaseService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 class AIAnalysisService {
   constructor() {
+    // Initialize database service for proper report loading
+    this.db = new DatabaseService();
+    
     // Initialize Groq client (OpenAI-compatible)
     this.groq = new OpenAI({
       apiKey: process.env.GROQ_API_KEY || 'demo-key',
@@ -572,16 +576,71 @@ class AIAnalysisService {
   }
 
   /**
-   * Utility methods
+   * Load report data using database service
    */
   async loadReport(reportId) {
-    const reportPath = path.join(__dirname, '../data/reports', `${reportId}.json`);
-    
-    if (!fs.existsSync(reportPath)) {
+    try {
+      // First try to find test run by ID (numeric)
+      let testRun = this.db.findTestRunById(reportId);
+      
+      // If not found, try to find by run_key (UUID) 
+      if (!testRun) {
+        const runByKey = this.db.findTestRunByKey(reportId);
+        if (runByKey) {
+          testRun = this.db.findTestRunById(runByKey.id);
+        }
+      }
+
+      if (!testRun) {
+        console.log(`❌ Test run not found for ID: ${reportId}`);
+        return null;
+      }
+
+      // Get test cases with steps and artifacts
+      const testCases = this.db.getTestCasesByRun(testRun.id);
+      const enrichedTestCases = testCases.map(testCase => {
+        const steps = this.db.getTestStepsByCase(testCase.id);
+        const artifacts = this.db.getTestArtifactsByCase(testCase.id);
+        
+        return {
+          ...testCase,
+          name: testCase.test_name,
+          status: testCase.status,
+          duration: testCase.duration,
+          error: testCase.error_message,
+          steps: steps.map(step => ({
+            ...step,
+            name: step.step_name,
+            status: step.status,
+            duration: step.duration,
+            error: step.error_message
+          })),
+          artifacts: artifacts.map(artifact => ({
+            ...artifact,
+            filename: artifact.artifact_name,
+            type: artifact.artifact_type,
+            url: artifact.file_path
+          }))
+        };
+      });
+
+      // Return report in expected format
+      return {
+        id: testRun.run_key,
+        projectId: testRun.project_id,
+        testSuite: testRun.test_suite,
+        environment: testRun.environment,
+        framework: testRun.framework,
+        status: testRun.status,
+        startTime: testRun.started_at,
+        endTime: testRun.finished_at,
+        summary: testRun.summary ? (typeof testRun.summary === 'string' ? JSON.parse(testRun.summary) : testRun.summary) : {},
+        tests: enrichedTestCases
+      };
+    } catch (error) {
+      console.error(`❌ Error loading report ${reportId}:`, error);
       return null;
     }
-    
-    return JSON.parse(fs.readFileSync(reportPath, 'utf8'));
   }
 
   cosineSimilarity(vecA, vecB) {

@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -7,11 +6,18 @@ import { SettingsProvider } from './contexts/SettingsContext';
 import { ProjectProvider } from './contexts/ProjectContext';
 import { Toaster } from 'react-hot-toast';
 import Layout from './components/Layout/Layout';
+import SessionExpiredNotification from './components/SessionExpiredNotification';
 import Dashboard from './pages/Dashboard';
 import Reports from './pages/Reports';
 import ReportDetails from './pages/ReportDetails';
+import FailureAnalysis from './pages/FailureAnalysis';
+import TrendAnalysis from './pages/TrendAnalysis';
+import AnalysisActivity from './pages/AnalysisActivity';
+import Connectors from './pages/Connectors';
 import Settings from './pages/Settings';
+import Profile from './pages/Profile';
 import Login from './pages/Login';
+import AcceptInvitation from './pages/AcceptInvitation';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 
 function App() {
@@ -23,8 +29,12 @@ function App() {
             <WebSocketProvider>
             <Router>
               <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+                {/* Session expiration notification */}
+                <SessionExpiredNotification />
+                
                 <Routes>
                   <Route path="/login" element={<Login />} />
+                  <Route path="/accept-invitation/:token" element={<AcceptInvitation />} />
                   <Route path="/" element={
                     <ProtectedRoute>
                       <Layout>
@@ -46,10 +56,45 @@ function App() {
                       </Layout>
                     </ProtectedRoute>
                   } />
+                  <Route path="/defects" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <FailureAnalysis />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/trends" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <TrendAnalysis />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/analysis" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <AnalysisActivity />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/connectors" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Connectors />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
                   <Route path="/settings" element={
                     <ProtectedRoute>
                       <Layout>
                         <Settings />
+                      </Layout>
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <Layout>
+                        <Profile />
                       </Layout>
                     </ProtectedRoute>
                   } />

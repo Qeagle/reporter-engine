@@ -1,10 +1,10 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import UserService from '../services/UserService.js';
+import DatabaseService from '../services/DatabaseService.js';
 
 class AuthController {
   constructor() {
-    this.userService = new UserService();
+    this.databaseService = new DatabaseService();
     this.jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
   }
 
@@ -19,32 +19,9 @@ class AuthController {
         });
       }
 
-      // DEVELOPMENT MODE: Accept any credentials for testing
-      if (process.env.NODE_ENV !== 'production') {
-        const token = jwt.sign(
-          { 
-            userId: 1, 
-            username: username, 
-            role: 'admin' 
-          },
-          this.jwtSecret || 'dev-secret',
-          { expiresIn: '24h' }
-        );
-
-        return res.json({
-          success: true,
-          token,
-          user: {
-            id: 1,
-            username: username,
-            email: `${username}@example.com`,
-            role: 'admin'
-          }
-        });
-      }
-
-      // PRODUCTION MODE: Actual authentication
-      const user = await this.userService.findByUsername(username);
+      // Find user by email
+      const user = await this.databaseService.findUserByEmail(username);
+      
       if (!user) {
         return res.status(401).json({
           success: false,
@@ -52,7 +29,9 @@ class AuthController {
         });
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+      // Check password
+      const isValidPassword = await bcrypt.compare(password, user.password_hash);
+      
       if (!isValidPassword) {
         return res.status(401).json({
           success: false,
@@ -60,24 +39,25 @@ class AuthController {
         });
       }
 
+      // Create JWT token with real user ID
       const token = jwt.sign(
         { 
           userId: user.id, 
-          username: user.username, 
-          role: user.role 
+          username: user.email, 
+          role: 'admin' 
         },
         this.jwtSecret,
         { expiresIn: '24h' }
       );
 
-      res.json({
+      return res.json({
         success: true,
         token,
         user: {
           id: user.id,
-          username: user.username,
+          username: user.email,
           email: user.email,
-          role: user.role
+          role: 'admin'
         }
       });
     } catch (error) {
@@ -151,19 +131,6 @@ class AuthController {
 
   async getProfile(req, res) {
     try {
-      // DEVELOPMENT MODE: Return a mock profile when no auth middleware
-      if (process.env.NODE_ENV !== 'production' && !req.user) {
-        return res.json({
-          success: true,
-          user: {
-            id: 1,
-            username: 'testuser',
-            email: 'testuser@example.com',
-            role: 'admin'
-          }
-        });
-      }
-
       const userId = req.user?.userId;
       if (!userId) {
         return res.status(401).json({
@@ -172,7 +139,7 @@ class AuthController {
         });
       }
 
-      const user = await this.userService.findById(userId);
+      const user = await this.databaseService.findUserById(userId);
       
       if (!user) {
         return res.status(404).json({
@@ -185,9 +152,9 @@ class AuthController {
         success: true,
         user: {
           id: user.id,
-          username: user.username,
+          username: user.email,
           email: user.email,
-          role: user.role
+          role: 'admin' // TODO: Get actual role from database
         }
       });
     } catch (error) {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
 
@@ -9,6 +9,8 @@ interface ReportMetricsProps {
 }
 
 const ReportMetrics: React.FC<ReportMetricsProps> = ({ metrics }) => {
+  const [topCount, setTopCount] = useState(3);
+  
   if (!metrics) {
     return (
       <div className="text-center py-8">
@@ -31,11 +33,58 @@ const ReportMetrics: React.FC<ReportMetricsProps> = ({ metrics }) => {
     }]
   };
 
+  // Get test duration data for chart
+  const testDataForChart = metrics.testDurations || [];
+  
+  // Sort by duration and take top N (based on user selection)
+  const sortedTests = testDataForChart
+    .filter((test: any) => test && (test.duration || test.duration === 0))
+    .sort((a: any, b: any) => (b.duration || 0) - (a.duration || 0))
+    .slice(0, topCount);
+
   const durationData = {
-    labels: metrics.testDurations?.slice(0, 3).map((test: any) => test.name) || [],
+    labels: sortedTests.map((test: any) => {
+      // Extract test name, handling various possible formats
+      let name = test.name || test.testName || test.title || test.description || test.spec || test.fullTitle;
+      
+      // If still no name, try to extract from common test runner formats
+      if (!name && test.location) {
+        name = test.location;
+      }
+      
+      // Handle Playwright-style test names (browser › file › suite › test)
+      if (name && name.includes(' › ')) {
+        const parts = name.split(' › ');
+        // Take the last 2 parts (suite › test name) for better readability
+        if (parts.length >= 2) {
+          name = parts.slice(-2).join(' › ');
+        }
+      }
+      
+      // Handle other common separators
+      if (name && name.includes(' > ')) {
+        const parts = name.split(' > ');
+        if (parts.length >= 2) {
+          name = parts.slice(-2).join(' > ');
+        }
+      }
+      
+      // If name is still too long, truncate intelligently
+      if (name && name.length > 40) {
+        // Try to find a good breaking point
+        const words = name.split(' ');
+        if (words.length > 3) {
+          name = words.slice(0, 3).join(' ') + '...';
+        } else {
+          name = name.substring(0, 37) + '...';
+        }
+      }
+      
+      return name || 'Unknown Test';
+    }),
     datasets: [{
       label: 'Duration (ms)',
-      data: metrics.testDurations?.slice(0, 3).map((test: any) => test.duration) || [],
+      data: sortedTests.map((test: any) => test.duration || 0),
       backgroundColor: 'rgba(59, 130, 246, 0.5)',
       borderColor: 'rgb(59, 130, 246)',
       borderWidth: 1
@@ -50,20 +99,48 @@ const ReportMetrics: React.FC<ReportMetricsProps> = ({ metrics }) => {
         labels: {
           color: 'rgb(107, 114, 128)'
         }
+      },
+      tooltip: {
+        callbacks: {
+          title: function(context: any) {
+            // Show full test name in tooltip
+            const index = context[0].dataIndex;
+            const test = metrics.testDurations?.[index];
+            if (!test) return 'Unknown Test';
+            
+            const fullName = test.name || test.testName || test.title || test.description || test.spec || test.fullTitle || test.location;
+            return fullName || 'Unknown Test';
+          },
+          label: function(context: any) {
+            const duration = context.parsed.y;
+            return `Duration: ${duration}ms (${(duration / 1000).toFixed(2)}s)`;
+          }
+        }
       }
     },
     scales: {
       y: {
         ticks: {
-          color: 'rgb(107, 114, 128)'
+          color: 'rgb(107, 114, 128)',
+          callback: function(value: any) {
+            // Format Y-axis to show duration in seconds for readability
+            return (value / 1000).toFixed(1) + 's';
+          }
         },
         grid: {
           color: 'rgba(107, 114, 128, 0.1)'
+        },
+        title: {
+          display: true,
+          text: 'Duration (seconds)',
+          color: 'rgb(107, 114, 128)'
         }
       },
       x: {
         ticks: {
-          color: 'rgb(107, 114, 128)'
+          color: 'rgb(107, 114, 128)',
+          maxRotation: 45,
+          minRotation: 0
         },
         grid: {
           color: 'rgba(107, 114, 128, 0.1)'
@@ -116,11 +193,31 @@ const ReportMetrics: React.FC<ReportMetricsProps> = ({ metrics }) => {
         </div>
 
         <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            Test Duration (Top 3)
-          </h3>
-          <div className="h-64">
-            <Bar data={durationData} options={chartOptions} />
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+              Test Duration (Top {topCount})
+            </h3>
+            <select
+              value={topCount}
+              onChange={(e) => setTopCount(Number(e.target.value))}
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value={3}>Top 3</option>
+              <option value={5}>Top 5</option>
+              <option value={10}>Top 10</option>
+            </select>
+          </div>
+          <div className={`${topCount <= 5 ? 'h-64' : topCount <= 10 ? 'h-80' : 'h-96'}`}>
+            {metrics.testDurations && metrics.testDurations.length > 0 ? (
+              <Bar data={durationData} options={chartOptions} />
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                <div className="text-center">
+                  <p className="text-sm">No test duration data available</p>
+                  <p className="text-xs mt-1">Duration metrics will appear here when tests are run</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -168,14 +265,32 @@ const ReportMetrics: React.FC<ReportMetricsProps> = ({ metrics }) => {
             </div>
             {metrics.environmentInfo.metadata && Object.keys(metrics.environmentInfo.metadata)
               .filter(key => key !== 'browser') // Exclude browser info from metrics
-              .map((key) => (
-                <div key={key}>
-                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{key}:</span>
-                  <p className="text-sm text-gray-900 dark:text-white">
-                    {String(metrics.environmentInfo.metadata[key])}
-                  </p>
-                </div>
-              ))}
+              .map((key) => {
+                const value = metrics.environmentInfo.metadata[key];
+                let displayValue;
+                
+                // Handle different types of values appropriately
+                if (typeof value === 'object' && value !== null) {
+                  if (key === 'projectInfo') {
+                    // Special handling for projectInfo object
+                    displayValue = value.name || value.title || JSON.stringify(value, null, 2);
+                  } else {
+                    // For other objects, show formatted JSON
+                    displayValue = JSON.stringify(value, null, 2);
+                  }
+                } else {
+                  displayValue = String(value);
+                }
+                
+                return (
+                  <div key={key}>
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{key}:</span>
+                    <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">
+                      {displayValue}
+                    </p>
+                  </div>
+                );
+              })}
           </div>
         </div>
       )}

@@ -1,16 +1,35 @@
-import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, Clock, CheckCircle, XCircle, AlertCircle, Image, FileText, Timer, Monitor } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown, ChevronRight, Clock, CheckCircle, XCircle, AlertCircle, Image, FileText, Timer, Monitor, Download, File, Globe } from 'lucide-react';
 import TimerGraph from './TimerGraph';
 import InlineAIInsights from '../AIInsights/InlineAIInsights';
+import { reportService } from '../../services/reportService';
+import toast from 'react-hot-toast';
 
 interface TestsListProps {
   tests: any[];
+  reportId: string;
 }
 
-const TestsList: React.FC<TestsListProps> = ({ tests }) => {
+const TestsList: React.FC<TestsListProps> = ({ tests, reportId }) => {
   const [expandedTests, setExpandedTests] = useState<Set<string>>(new Set());
   const [showTimerGraph, setShowTimerGraph] = useState<string | null>(null);
   const [groupByBrowser, setGroupByBrowser] = useState(false);
+  const [htmlDropdownOpen, setHtmlDropdownOpen] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setHtmlDropdownOpen(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Group tests by browser
   const groupTestsByBrowser = (tests: any[]) => {
@@ -127,24 +146,43 @@ const TestsList: React.FC<TestsListProps> = ({ tests }) => {
     return `${seconds}s`;
   };
 
+  // Export functions for individual test cases
+  const exportTestAsPDF = async (testCase: any) => {
+    try {
+      toast.loading('Generating PDF for test case...', { id: 'test-pdf-export' });
+      await reportService.exportTestCaseToPDF(reportId, testCase.id || testCase.name);
+      toast.success('Test case PDF downloaded successfully!', { id: 'test-pdf-export' });
+    } catch (error: any) {
+      console.error('Test case PDF export failed:', error);
+      toast.error(error.message || 'Failed to export test case as PDF', { id: 'test-pdf-export' });
+    }
+  };
+
+  const exportTestAsJSON = async (testCase: any) => {
+    try {
+      toast.loading('Generating JSON for test case...', { id: 'test-json-export' });
+      await reportService.exportTestCaseToJSON(reportId, testCase.id || testCase.name);
+      toast.success('Test case JSON downloaded successfully!', { id: 'test-json-export' });
+    } catch (error: any) {
+      console.error('Test case JSON export failed:', error);
+      toast.error(error.message || 'Failed to export test case as JSON', { id: 'test-json-export' });
+    }
+  };
+
+  const exportTestAsHTML = async (testCase: any, includeArtifacts: boolean = true) => {
+    try {
+      const exportType = includeArtifacts ? 'with artifacts' : 'lite';
+      toast.loading(`Generating HTML for test case (${exportType})...`, { id: 'test-html-export' });
+      await reportService.exportTestCaseToHTML(reportId, testCase.id || testCase.name, includeArtifacts);
+      toast.success(`Test case HTML (${exportType}) downloaded successfully!`, { id: 'test-html-export' });
+    } catch (error: any) {
+      console.error('Test case HTML export failed:', error);
+      toast.error(error.message || 'Failed to export test case as HTML', { id: 'test-html-export' });
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {/* Group toggle */}
-      {tests.some(test => getTestEnvironmentInfo(test).browser) && (
-        <div className="flex justify-end">
-          <button
-            onClick={() => setGroupByBrowser(!groupByBrowser)}
-            className={`px-3 py-2 text-xs font-medium rounded-md transition-colors duration-200 ${
-              groupByBrowser
-                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-            }`}
-          >
-            {groupByBrowser ? 'Show All Tests' : 'Group by Browser'}
-          </button>
-        </div>
-      )}
-
       <div className="space-y-2">
         {Object.entries(groupedTests).map(([browserGroup, browserTests]) => (
           <div key={browserGroup}>
@@ -199,6 +237,110 @@ const TestsList: React.FC<TestsListProps> = ({ tests }) => {
 
           {expandedTests.has(test.name) && (
             <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-700">
+              {/* Export buttons for individual test case */}
+              <div className="mb-4 flex items-center justify-between">
+                <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                  Test Case Actions
+                </h4>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      exportTestAsPDF(test);
+                    }}
+                    className="inline-flex items-center px-2 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700 transition-colors"
+                    title="Export this test case as PDF"
+                  >
+                    <FileText className="w-3 h-3 mr-1" />
+                    PDF
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      exportTestAsJSON(test);
+                    }}
+                    className="inline-flex items-center px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
+                    title="Export this test case as JSON"
+                  >
+                    <File className="w-3 h-3 mr-1" />
+                    JSON
+                  </button>
+                  
+                  {/* HTML Export Dropdown */}
+                  <div className="relative" ref={dropdownRef}>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setHtmlDropdownOpen(htmlDropdownOpen === test.name ? null : test.name);
+                      }}
+                      className="inline-flex items-center px-2 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 transition-colors"
+                      title="Export this test case as HTML"
+                    >
+                      <Globe className="w-3 h-3 mr-1" />
+                      HTML
+                      <ChevronDown className="w-3 h-3 ml-1" />
+                    </button>
+                    
+                    {htmlDropdownOpen === test.name && (
+                      <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-10 min-w-[160px]">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            exportTestAsHTML(test, false);
+                            setHtmlDropdownOpen(null);
+                          }}
+                          className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        >
+                          <Globe className="w-3 h-3 mr-2" />
+                          Lite Export
+                          <div className="ml-auto text-xs text-gray-500">HTML only</div>
+                        </button>
+                        <div className="relative group">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (test.artifacts?.length > 0) {
+                                exportTestAsHTML(test, true);
+                                setHtmlDropdownOpen(null);
+                              }
+                            }}
+                            disabled={!test.artifacts || test.artifacts.length === 0}
+                            className={`w-full text-left px-3 py-2 text-xs flex items-center border-t border-gray-200 dark:border-gray-700 ${
+                              !test.artifacts || test.artifacts.length === 0
+                                ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed bg-gray-50 dark:bg-gray-700'
+                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                            }`}
+                          >
+                            <Download className={`w-3 h-3 mr-2 ${
+                              !test.artifacts || test.artifacts.length === 0
+                                ? 'text-gray-400 dark:text-gray-500'
+                                : ''
+                            }`} />
+                            Full Export
+                            <div className={`ml-auto text-xs ${
+                              !test.artifacts || test.artifacts.length === 0
+                                ? 'text-gray-400 dark:text-gray-500'
+                                : 'text-gray-500'
+                            }`}>
+                              {!test.artifacts || test.artifacts.length === 0 
+                                ? 'No artifacts' 
+                                : 'With artifacts'
+                              }
+                            </div>
+                          </button>
+                          {/* Custom tooltip for disabled button */}
+                          {(!test.artifacts || test.artifacts.length === 0) && (
+                            <div className="absolute left-full top-0 ml-2 px-2 py-1 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                              No artifacts available for this test case
+                              <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-full border-4 border-transparent border-r-gray-800 dark:border-r-gray-900"></div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
               {/* Test Environment */}
               {(() => {
                 const envInfo = getTestEnvironmentInfo(test);

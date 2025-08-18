@@ -1,0 +1,423 @@
+{
+  "id": "8aa99240-a6ed-4680-bffb-fc465f5c65b2",
+  "testSuite": "Deletelead",
+  "environment": "development",
+  "framework": "Playwright",
+  "tags": [
+    "salesforce",
+    "e2e",
+    "playwright",
+    "automation"
+  ],
+  "metadata": {
+    "browser": "Salesfe",
+    "parallel": true,
+    "workers": 4,
+    "version": "1.0.0"
+  },
+  "status": "completed",
+  "startTime": "2025-08-09T08:05:00.311Z",
+  "tests": [
+    {
+      "name": "Salesfe › smoke/deletelead.spec.ts › @smoke Delete Salesforce Lead › Delete a lead",
+      "status": "failed",
+      "duration": 47872,
+      "startTime": "2025-08-09T08:05:02.197Z",
+      "endTime": "2025-08-09T08:05:50.069Z",
+      "errorMessage": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeFalsy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mtrue\u001b[39m",
+      "stackTrace": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeFalsy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mtrue\u001b[39m\n    at /Users/babu/Desktop/playwright-salesforce/tests/smoke/deletelead.spec.ts:31:21",
+      "steps": [
+        {
+          "name": "Before Hooks",
+          "status": "passed",
+          "duration": 2721,
+          "error": null,
+          "category": "hook",
+          "order": 1
+        },
+        {
+          "name": "Navigate to \"/\"",
+          "status": "passed",
+          "duration": 1581,
+          "error": null,
+          "category": "pw:api",
+          "order": 2
+        },
+        {
+          "name": "Wait for load state \"domcontentloaded\"",
+          "status": "passed",
+          "duration": 1,
+          "error": null,
+          "category": "pw:api",
+          "order": 3
+        },
+        {
+          "name": "Wait for selector locator('input#username')",
+          "status": "passed",
+          "duration": 35,
+          "error": null,
+          "category": "pw:api",
+          "order": 4
+        },
+        {
+          "name": "Fill \"naveen.kumar187@agentforce.com\" locator('input#username')",
+          "status": "passed",
+          "duration": 118,
+          "error": null,
+          "category": "pw:api",
+          "order": 5
+        },
+        {
+          "name": "Wait for selector locator('input#password')",
+          "status": "passed",
+          "duration": 4,
+          "error": null,
+          "category": "pw:api",
+          "order": 6
+        },
+        {
+          "name": "Fill \"Sales@123\" locator('input#password')",
+          "status": "passed",
+          "duration": 58,
+          "error": null,
+          "category": "pw:api",
+          "order": 7
+        },
+        {
+          "name": "Wait for selector locator('input#Login')",
+          "status": "passed",
+          "duration": 2,
+          "error": null,
+          "category": "pw:api",
+          "order": 8
+        },
+        {
+          "name": "Click locator('input#Login')",
+          "status": "passed",
+          "duration": 2442,
+          "error": null,
+          "category": "pw:api",
+          "order": 9
+        },
+        {
+          "name": "Wait for selector locator('[data-testid=\"app-launcher-button\"], [title=\"App Launcher\"], [aria-label=\"App Launcher\"]')",
+          "status": "passed",
+          "duration": 6793,
+          "error": null,
+          "category": "pw:api",
+          "order": 10
+        },
+        {
+          "name": "Wait for selector locator('[data-testid=\"app-launcher-button\"], [title=\"App Launcher\"], [aria-label=\"App Launcher\"]')",
+          "status": "passed",
+          "duration": 7,
+          "error": null,
+          "category": "pw:api",
+          "order": 11
+        },
+        {
+          "name": "Click locator('[data-testid=\"app-launcher-button\"], [title=\"App Launcher\"], [aria-label=\"App Launcher\"]')",
+          "status": "passed",
+          "duration": 50,
+          "error": null,
+          "category": "pw:api",
+          "order": 12
+        },
+        {
+          "name": "Is visible locator('//button[normalize-space(text())=\\'View All\\'] | //a[normalize-space(text())=\\'View All\\']')",
+          "status": "passed",
+          "duration": 12,
+          "error": null,
+          "category": "pw:api",
+          "order": 13
+        },
+        {
+          "name": "Wait for selector locator('//button[normalize-space(text())=\\'View All\\'] | //a[normalize-space(text())=\\'View All\\']')",
+          "status": "passed",
+          "duration": 333,
+          "error": null,
+          "category": "pw:api",
+          "order": 14
+        },
+        {
+          "name": "Click locator('//button[normalize-space(text())=\\'View All\\'] | //a[normalize-space(text())=\\'View All\\']')",
+          "status": "passed",
+          "duration": 40,
+          "error": null,
+          "category": "pw:api",
+          "order": 15
+        },
+        {
+          "name": "Wait for selector locator('input[placeholder=\"Search apps or items...\"]')",
+          "status": "passed",
+          "duration": 192,
+          "error": null,
+          "category": "pw:api",
+          "order": 16
+        },
+        {
+          "name": "Fill \"Leads\" locator('input[placeholder=\"Search apps or items...\"]')",
+          "status": "passed",
+          "duration": 20,
+          "error": null,
+          "category": "pw:api",
+          "order": 17
+        },
+        {
+          "name": "Is visible locator('mark:text-is(\\'Leads\\')')",
+          "status": "passed",
+          "duration": 14,
+          "error": null,
+          "category": "pw:api",
+          "order": 18
+        },
+        {
+          "name": "Wait for selector locator('mark:text-is(\\'Leads\\')')",
+          "status": "failed",
+          "duration": 15028,
+          "error": "TimeoutError: locator.waitFor: Timeout 15000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('mark:text-is(\\'Leads\\')') to be visible\u001b[22m\n",
+          "category": "pw:api",
+          "order": 19
+        },
+        {
+          "name": "Wait for timeout",
+          "status": "passed",
+          "duration": 1018,
+          "error": null,
+          "category": "pw:api",
+          "order": 20
+        },
+        {
+          "name": "Wait for selector locator('mark:text-is(\\'Leads\\')')",
+          "status": "passed",
+          "duration": 8869,
+          "error": null,
+          "category": "pw:api",
+          "order": 21
+        },
+        {
+          "name": "Click locator('mark:text-is(\\'Leads\\')')",
+          "status": "passed",
+          "duration": 100,
+          "error": null,
+          "category": "pw:api",
+          "order": 22
+        },
+        {
+          "name": "Wait for selector locator('input[placeholder=\"Search this list...\"]')",
+          "status": "passed",
+          "duration": 1828,
+          "error": null,
+          "category": "pw:api",
+          "order": 23
+        },
+        {
+          "name": "Wait for selector locator('input[placeholder=\"Search this list...\"]')",
+          "status": "passed",
+          "duration": 37,
+          "error": null,
+          "category": "pw:api",
+          "order": 24
+        },
+        {
+          "name": "Fill \"O'Reilly\" locator('input[placeholder=\"Search this list...\"]')",
+          "status": "passed",
+          "duration": 43,
+          "error": null,
+          "category": "pw:api",
+          "order": 25
+        },
+        {
+          "name": "Wait for selector locator('input[placeholder=\"Search this list...\"]')",
+          "status": "passed",
+          "duration": 36,
+          "error": null,
+          "category": "pw:api",
+          "order": 26
+        },
+        {
+          "name": "Press \"Enter\" locator('input[placeholder=\"Search this list...\"]')",
+          "status": "passed",
+          "duration": 48,
+          "error": null,
+          "category": "pw:api",
+          "order": 27
+        },
+        {
+          "name": "Wait for timeout",
+          "status": "passed",
+          "duration": 1533,
+          "error": null,
+          "category": "pw:api",
+          "order": 28
+        },
+        {
+          "name": "Wait for selector locator('input[placeholder=\"Search this list...\"]')",
+          "status": "passed",
+          "duration": 20,
+          "error": null,
+          "category": "pw:api",
+          "order": 29
+        },
+        {
+          "name": "Wait for selector locator('input[placeholder=\"Search this list...\"]')",
+          "status": "passed",
+          "duration": 16,
+          "error": null,
+          "category": "pw:api",
+          "order": 30
+        },
+        {
+          "name": "Fill \"O'Reilly\" locator('input[placeholder=\"Search this list...\"]')",
+          "status": "passed",
+          "duration": 21,
+          "error": null,
+          "category": "pw:api",
+          "order": 31
+        },
+        {
+          "name": "Wait for selector locator('input[placeholder=\"Search this list...\"]')",
+          "status": "passed",
+          "duration": 14,
+          "error": null,
+          "category": "pw:api",
+          "order": 32
+        },
+        {
+          "name": "Press \"Enter\" locator('input[placeholder=\"Search this list...\"]')",
+          "status": "passed",
+          "duration": 21,
+          "error": null,
+          "category": "pw:api",
+          "order": 33
+        },
+        {
+          "name": "Wait for timeout",
+          "status": "passed",
+          "duration": 1517,
+          "error": null,
+          "category": "pw:api",
+          "order": 34
+        },
+        {
+          "name": "Wait for selector locator('//table/tbody/tr[1]/td[10]')",
+          "status": "passed",
+          "duration": 32,
+          "error": null,
+          "category": "pw:api",
+          "order": 35
+        },
+        {
+          "name": "Click locator('//table/tbody/tr[1]/td[10]')",
+          "status": "passed",
+          "duration": 55,
+          "error": null,
+          "category": "pw:api",
+          "order": 36
+        },
+        {
+          "name": "Wait for selector locator('a[title=\"Delete\"]')",
+          "status": "passed",
+          "duration": 811,
+          "error": null,
+          "category": "pw:api",
+          "order": 37
+        },
+        {
+          "name": "Click locator('a[title=\"Delete\"]')",
+          "status": "passed",
+          "duration": 60,
+          "error": null,
+          "category": "pw:api",
+          "order": 38
+        },
+        {
+          "name": "Wait for selector locator('button[title=\"Delete\"]')",
+          "status": "passed",
+          "duration": 15,
+          "error": null,
+          "category": "pw:api",
+          "order": 39
+        },
+        {
+          "name": "Click locator('button[title=\"Delete\"]')",
+          "status": "passed",
+          "duration": 968,
+          "error": null,
+          "category": "pw:api",
+          "order": 40
+        },
+        {
+          "name": "Get text content locator('div[id*=\"toastDescription\"] span')",
+          "status": "passed",
+          "duration": 1874,
+          "error": null,
+          "category": "pw:api",
+          "order": 41
+        },
+        {
+          "name": "toBeFalsy",
+          "status": "failed",
+          "duration": 0,
+          "error": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBeFalsy\u001b[2m()\u001b[22m\n\nReceived: \u001b[31mtrue\u001b[39m",
+          "category": "expect",
+          "order": 42
+        },
+        {
+          "name": "After Hooks",
+          "status": "passed",
+          "duration": 533,
+          "error": null,
+          "category": "hook",
+          "order": 43
+        },
+        {
+          "name": "Worker Cleanup",
+          "status": "passed",
+          "duration": 93,
+          "error": null,
+          "category": "hook",
+          "order": 44
+        }
+      ],
+      "artifacts": [
+        {
+          "id": "5561d550-fd07-4768-86b1-7aaafc5fd03e",
+          "type": "screenshot",
+          "filename": "test-failed-1.png",
+          "url": "http://localhost:3001/api/tests/artifacts/5a45d6ab-1e83-4b40-86d2-1cead40b173d-test-failed-1.png",
+          "uploadedAt": "2025-08-09T08:05:50.079Z"
+        },
+        {
+          "id": "b553077c-1bd7-42f2-99cf-beefedf882dd",
+          "type": "video",
+          "filename": "video.webm",
+          "url": "http://localhost:3001/api/tests/artifacts/7ac671c6-6680-4e44-b5e0-6ed3e288347b-video.webm",
+          "uploadedAt": "2025-08-09T08:05:50.202Z"
+        }
+      ],
+      "annotations": [],
+      "metadata": {
+        "file": "/Users/babu/Desktop/playwright-salesforce/tests/smoke/deletelead.spec.ts",
+        "line": 11,
+        "column": 7,
+        "retries": 0,
+        "parallelIndex": 0
+      }
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 1,
+    "skipped": 0,
+    "duration": 49932,
+    "passRate": 0,
+    "startTime": "2025-08-09T08:05:00.298Z",
+    "endTime": "2025-08-09T08:05:50.243Z"
+  },
+  "endTime": "2025-08-09T08:05:50.243Z",
+  "projectId": "playwright-salesforce-default",
+  "projectName": "Salesforce Playwright Tests",
+  "projectType": "playwright"
+}

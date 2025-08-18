@@ -1,0 +1,76 @@
+{
+  "id": "4ca2386a-8e7a-45be-afa1-d56df1143567",
+  "testSuite": "LeafTaps Test Suite",
+  "environment": "local",
+  "framework": "testng-selenium",
+  "tags": [
+    "smoke",
+    "regression"
+  ],
+  "metadata": {
+    "author": "LeafTaps Framework",
+    "browser": "chrome",
+    "version": "1.0.0"
+  },
+  "projectId": "selenium-leaftaps",
+  "projectName": "LeafTaps Selenium Tests",
+  "projectType": "selenium",
+  "status": "completed",
+  "startTime": "2025-08-10T05:13:15.235Z",
+  "tests": [
+    {
+      "name": "Login",
+      "status": "passed",
+      "duration": 6847,
+      "startTime": "2025-08-10T10:43:15.272927",
+      "endTime": "2025-08-10T10:43:22.119961",
+      "steps": [],
+      "artifacts": [],
+      "annotations": [],
+      "metadata": {
+        "environment": "local",
+        "browser": "chrome",
+        "projectType": "selenium",
+        "projectName": "LeafTaps Selenium Tests",
+        "projectId": "selenium-leaftaps",
+        "timestamp": "2025-08-10T10:43:22.119973"
+      }
+    },
+    {
+      "name": "runLogin",
+      "status": "passed",
+      "duration": 1725,
+      "startTime": "2025-08-10T10:43:20.241461",
+      "endTime": "2025-08-10T10:43:21.966506",
+      "steps": [
+        {
+          "id": "741e8ffe-113c-4197-bde1-002293a4115f",
+          "name": "Browser is closed",
+          "status": "pass",
+          "duration": 0,
+          "timestamp": "2025-08-10T05:13:22.082Z",
+          "description": "Browser is closed"
+        }
+      ],
+      "artifacts": [],
+      "annotations": [],
+      "metadata": {
+        "environment": "local",
+        "browser": "chrome",
+        "projectType": "selenium",
+        "projectName": "LeafTaps Selenium Tests",
+        "projectId": "selenium-leaftaps",
+        "timestamp": "2025-08-10T10:43:21.966516"
+      }
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 6886,
+    "passRate": 100
+  },
+  "endTime": "2025-08-10T10:43:22.121668"
+}

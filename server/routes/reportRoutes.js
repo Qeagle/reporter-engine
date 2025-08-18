@@ -1,28 +1,38 @@
 import express from 'express';
 import ReportController from '../controllers/ReportController.js';
+import authMiddleware from '../middleware/authMiddleware.js';
+import { filterByProjectAccess } from '../middleware/rbacMiddleware.js';
 
 const router = express.Router();
 const reportController = new ReportController();
 
 // Report CRUD operations
-router.get('/', reportController.getReports.bind(reportController));
-router.get('/:reportId', reportController.getReportById.bind(reportController));
+router.get('/', authMiddleware, filterByProjectAccess(), reportController.getReports.bind(reportController));
+router.get('/:reportId/metrics', authMiddleware, reportController.getReportMetrics.bind(reportController));
+router.get('/:reportId', authMiddleware, reportController.getReportById.bind(reportController));
+router.delete('/:reportId', authMiddleware, reportController.deleteReport.bind(reportController));
 
-// Report analytics and metrics
-router.get('/:reportId/metrics', reportController.getReportMetrics.bind(reportController));
-router.get('/:reportId/timeline', reportController.getReportTimeline.bind(reportController));
+// Export functionality (with auth)
+router.get('/:reportId/export/pdf', authMiddleware, reportController.exportToPDF.bind(reportController));
+router.get('/:reportId/export/json', authMiddleware, reportController.exportToJSON.bind(reportController));
+router.get('/:reportId/export/size-estimates', authMiddleware, reportController.getExportSizeEstimates.bind(reportController));
+router.post('/:reportId/export/html', authMiddleware, reportController.exportToHTML.bind(reportController));
+router.get('/:reportId/export/html/:exportId/download', authMiddleware, reportController.downloadHTMLExport.bind(reportController));
 
-// Export functionality
-router.get('/:reportId/export/pdf', reportController.exportToPDF.bind(reportController));
-router.get('/:reportId/export/json', reportController.exportToJSON.bind(reportController));
+// Test case specific exports
+router.get('/:reportId/testcase/:testCaseId/export/pdf', authMiddleware, reportController.exportTestCaseToPDF.bind(reportController));
+router.get('/:reportId/testcase/:testCaseId/export/json', authMiddleware, reportController.exportTestCaseToJSON.bind(reportController));
+router.post('/:reportId/testcase/:testCaseId/export/html', authMiddleware, reportController.exportTestCaseToHTML.bind(reportController));
+router.get('/:reportId/testcase/:testCaseId/export/html/:exportId/download', authMiddleware, reportController.downloadTestCaseHTMLExport.bind(reportController));
 
-// Collaboration features
-router.post('/:reportId/annotations', reportController.addAnnotation.bind(reportController));
+// HTML Export management
+router.get('/exports/html', authMiddleware, reportController.listHTMLExports.bind(reportController));
+router.delete('/exports/html/:exportId', authMiddleware, reportController.deleteHTMLExport.bind(reportController));
 
 // Report comparison
-router.post('/compare', reportController.compareReports.bind(reportController));
+router.post('/compare', authMiddleware, reportController.compareReports.bind(reportController));
 
 // Search and filtering
-router.post('/search', reportController.searchReports.bind(reportController));
+router.post('/search', authMiddleware, filterByProjectAccess(), reportController.searchReports.bind(reportController));
 
 export default router;

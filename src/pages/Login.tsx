@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSettings } from '../contexts/SettingsContext';
 import { usePrimaryColor } from '../hooks/usePrimaryColor';
@@ -10,8 +10,8 @@ import toast from 'react-hot-toast';
 const Login: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [redirectReady, setRedirectReady] = useState(false);
   const [formData, setFormData] = useState({
-    username: '',
     email: '',
     password: ''
   });
@@ -20,8 +20,28 @@ const Login: React.FC = () => {
   const { settings } = useSettings();
   const { getButtonClasses, getIconClasses, getFocusClasses } = usePrimaryColor();
 
-  if (isAuthenticated) {
+  // Prevent immediate redirect flashing
+  useEffect(() => {
+    if (isAuthenticated && !loading) {
+      const timer = setTimeout(() => setRedirectReady(true), 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, loading]);
+
+  if (isAuthenticated && redirectReady) {
     return <Navigate to="/" replace />;
+  }
+
+  // Show loading state while auth is being initialized
+  if (loading && !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,10 +49,10 @@ const Login: React.FC = () => {
     
     try {
       if (isLogin) {
-        await login(formData.username, formData.password);
+        await login(formData.email, formData.password);
         toast.success('Welcome back!');
       } else {
-        await register(formData.username, formData.email, formData.password);
+        await register(formData.email, formData.password);
         toast.success('Account created successfully!');
       }
     } catch (error: any) {
@@ -67,38 +87,21 @@ const Login: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="username" className="sr-only">
-                Username
+              <label htmlFor="email" className="sr-only">
+                Email address
               </label>
               <input
-                id="username"
-                name="username"
-                type="text"
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
                 required
                 className="relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Username"
-                value={formData.username}
+                placeholder="Email address"
+                value={formData.email}
                 onChange={handleInputChange}
               />
             </div>
-            
-            {!isLogin && (
-              <div>
-                <label htmlFor="email" className="sr-only">
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required={!isLogin}
-                  className="relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                  placeholder="Email address"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                />
-              </div>
-            )}
             
             <div className="relative">
               <label htmlFor="password" className="sr-only">
@@ -108,6 +111,7 @@ const Login: React.FC = () => {
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete={isLogin ? 'current-password' : 'new-password'}
                 required
                 className={`relative block w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm ${
                   isLogin ? 'rounded-b-md' : 'rounded-b-md'
@@ -153,11 +157,40 @@ const Login: React.FC = () => {
               {isLogin ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
             </button>
           </div>
-        </form>
 
-        <div className="text-center text-xs text-gray-500 dark:text-gray-400">
-          <p>Default credentials: admin / admin</p>
-        </div>
+          {/* Demo Credentials */}
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 rounded-lg">
+            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">
+              Demo Credentials
+            </h3>
+            <div className="space-y-1 text-xs text-blue-700 dark:text-blue-400">
+              <div className="flex justify-between">
+                <span className="font-medium">Email:</span>
+                <span className="font-mono bg-blue-100 dark:bg-gray-700 px-2 py-1 rounded">
+                  admin@example.com
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Password:</span>
+                <span className="font-mono bg-blue-100 dark:bg-gray-700 px-2 py-1 rounded">
+                  admin123
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFormData({
+                  email: 'admin@example.com',
+                  password: 'admin123'
+                });
+              }}
+              className="mt-2 w-full text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors duration-200"
+            >
+              Click to auto-fill credentials
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

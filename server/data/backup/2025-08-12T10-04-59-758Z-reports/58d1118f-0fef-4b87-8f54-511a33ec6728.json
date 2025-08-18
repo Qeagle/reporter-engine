@@ -1,0 +1,77 @@
+{
+  "id": "58d1118f-0fef-4b87-8f54-511a33ec6728",
+  "testSuite": "LeafTaps Test Suite",
+  "environment": "local",
+  "framework": "testng-selenium",
+  "tags": [
+    "smoke",
+    "regression"
+  ],
+  "metadata": {
+    "author": "LeafTaps Framework",
+    "browser": "chrome",
+    "version": "1.0.0"
+  },
+  "projectId": "selenium-leaftaps",
+  "projectName": "LeafTaps Selenium Tests",
+  "projectType": "selenium",
+  "status": "completed",
+  "startTime": "2025-08-10T06:53:15.449Z",
+  "tests": [
+    {
+      "name": "runLogin",
+      "status": "passed",
+      "duration": 1668,
+      "startTime": "2025-08-10T12:23:20.719267",
+      "endTime": "2025-08-10T12:23:22.387309",
+      "steps": [
+        {
+          "id": "0d3a291a-c39d-4734-96f0-c7f10bb320f8",
+          "name": "demosalesmanager username is entered successfully",
+          "status": "pass",
+          "duration": 309,
+          "timestamp": "2025-08-10T06:53:21.168Z",
+          "screenshot": "reports/10-Aug-2025 12-23-15/images/229233671.jpg",
+          "description": "demosalesmanager username is entered successfully"
+        },
+        {
+          "id": "74ac374b-f338-4c37-8b1c-1df79b88d09c",
+          "name": "crmsfa password is entered successfully",
+          "status": "pass",
+          "duration": 262,
+          "timestamp": "2025-08-10T06:53:21.465Z",
+          "screenshot": "reports/10-Aug-2025 12-23-15/images/317465678.jpg",
+          "description": "crmsfa password is entered successfully"
+        },
+        {
+          "id": "1ddad483-f30c-453f-b051-46bd4fc8722f",
+          "name": "Login button is clicked successfully",
+          "status": "pass",
+          "duration": 283,
+          "timestamp": "2025-08-10T06:53:22.384Z",
+          "screenshot": "reports/10-Aug-2025 12-23-15/images/334147236.jpg",
+          "description": "Login button is clicked successfully"
+        }
+      ],
+      "artifacts": [],
+      "annotations": [],
+      "metadata": {
+        "environment": "local",
+        "browser": "chrome",
+        "projectType": "selenium",
+        "projectName": "LeafTaps Selenium Tests",
+        "projectId": "selenium-leaftaps",
+        "timestamp": "2025-08-10T12:23:22.38732"
+      }
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "skipped": 0,
+    "duration": 7084,
+    "passRate": 100
+  },
+  "endTime": "2025-08-10T12:23:22.533703"
+}

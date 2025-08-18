@@ -1,0 +1,49 @@
+{
+  "id": "34e8ce9a-503a-474e-b5bc-8cc6c7f06dc0",
+  "testSuite": "LeafTaps Test Suite",
+  "environment": "local",
+  "framework": "testng-selenium",
+  "tags": [
+    "smoke",
+    "regression"
+  ],
+  "metadata": {
+    "author": "LeafTaps Framework",
+    "browser": "chrome",
+    "version": "1.0.0"
+  },
+  "projectId": "selenium-leaftaps",
+  "projectName": "LeafTaps Selenium Tests",
+  "projectType": "selenium",
+  "status": "completed",
+  "startTime": "2025-08-10T10:10:48.812Z",
+  "tests": [
+    {
+      "name": "createLead",
+      "status": "skipped",
+      "duration": 0,
+      "startTime": "2025-08-10T15:40:58.665061",
+      "endTime": "2025-08-10T15:40:58.665098",
+      "steps": [],
+      "artifacts": [],
+      "annotations": [],
+      "metadata": {
+        "environment": "local",
+        "browser": "chrome",
+        "projectType": "selenium",
+        "projectName": "LeafTaps Selenium Tests",
+        "projectId": "selenium-leaftaps",
+        "timestamp": "2025-08-10T15:40:58.665111"
+      }
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 1,
+    "duration": 9923,
+    "passRate": 0
+  },
+  "endTime": "2025-08-10T15:40:58.735898"
+}

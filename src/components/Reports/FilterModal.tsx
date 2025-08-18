@@ -12,8 +12,7 @@ interface FilterModalProps {
 export interface FilterOptions {
   status: string[];
   environment: string[];
-  framework: string[];
-  author: string[];
+  authorText: string; // Regex text search for authors
   dateRange: {
     start: string;
     end: string;
@@ -58,11 +57,9 @@ const FilterModal: React.FC<FilterModalProps> = ({
     return Array.from(values).sort();
   };
 
-  const statuses = ['passed', 'failed', 'running', 'completed'];
+  const statuses = getUniqueValues('status');
   const environments = getUniqueValues('environment');
   const frameworks = getUniqueValues('framework');
-  const authors = getUniqueValues('author');
-
   const handleFilterChange = (category: keyof FilterOptions, value: string) => {
     if (category === 'dateRange') return;
     
@@ -92,7 +89,7 @@ const FilterModal: React.FC<FilterModalProps> = ({
       status: [],
       environment: [],
       framework: [],
-      author: [],
+      authorText: '',
       dateRange: { start: '', end: '' }
     });
   };
@@ -185,12 +182,27 @@ const FilterModal: React.FC<FilterModalProps> = ({
               category="framework"
             />
 
-            <FilterSection
-              title="Test Author"
-              icon={<User className="w-4 h-4 text-gray-500" />}
-              options={authors}
-              category="author"
-            />
+            {/* Author Name Filter with Regex Support */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <User className="w-4 h-4 text-gray-500" />
+                <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Author Name Filter (Regex)
+                </h3>
+              </div>
+              <div>
+                <input
+                  type="text"
+                  placeholder="Enter author name or regex pattern (e.g., hari | shan)"
+                  value={filters.authorText}
+                  onChange={(e) => setFilters({ ...filters, authorText: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Supports regex patterns. Use | for OR (e.g., "hari | shan"), .* for wildcards. Spaces around | are automatically handled.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Date Range Filter */}

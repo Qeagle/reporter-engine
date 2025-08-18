@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
-import { Save, Webhook, Users, Palette } from 'lucide-react';
+import { Save, Webhook, Users, Palette, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSettings } from '../contexts/SettingsContext';
 import { usePrimaryColor } from '../hooks/usePrimaryColor';
+import UserInvitationModal from '../components/UserInvitationModal';
+import InvitationManagement from '../components/InvitationManagement';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('general');
+  const [showInviteModal, setShowInviteModal] = useState(false);
   const { settings, updateSettings, saveSettings } = useSettings();
   const { getButtonClasses, getFocusClasses } = usePrimaryColor();
 
@@ -123,8 +126,12 @@ const Settings: React.FC = () => {
         <h3 className="text-lg font-medium text-gray-900 dark:text-white">
           User Management
         </h3>
-        <button className={`px-4 py-2 rounded-md transition-colors duration-200 ${getButtonClasses()}`}>
-          Invite User
+        <button 
+          onClick={() => setShowInviteModal(true)}
+          className={`px-4 py-2 rounded-md transition-colors duration-200 ${getButtonClasses()} flex items-center space-x-2`}
+        >
+          <Plus className="w-4 h-4" />
+          <span>Invite User</span>
         </button>
       </div>
       
@@ -140,6 +147,14 @@ const Settings: React.FC = () => {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Invitations Management */}
+      <div>
+        <h4 className="text-md font-medium text-gray-900 dark:text-white mb-4">
+          Pending Invitations
+        </h4>
+        <InvitationManagement />
       </div>
     </div>
   );
@@ -189,6 +204,18 @@ const Settings: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* User Invitation Modal */}
+      <UserInvitationModal
+        isOpen={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        onInvitationSent={() => {
+          // Refresh the invitations list if on users tab
+          if (activeTab === 'users') {
+            // The InvitationManagement component will automatically refresh
+          }
+        }}
+      />
     </div>
   );
 };

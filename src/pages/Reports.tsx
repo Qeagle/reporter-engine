@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, Download, User, AlertCircle, Calendar } from 'lucide-react';
+import { Search, Filter, User, AlertCircle, Calendar, FileText, File, Archive, Globe } from 'lucide-react';
 import { reportService } from '../services/reportService';
 import { useProject } from '../contexts/ProjectContext';
 import FilterModal, { FilterOptions } from '../components/Reports/FilterModal';
@@ -13,11 +13,12 @@ const Reports: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
+  const [artifactCounts, setArtifactCounts] = useState<Record<string, number>>({});
   const [filters, setFilters] = useState<FilterOptions>({
     status: [],
     environment: [],
     framework: [],
-    author: [],
+    authorText: '',
     dateRange: { start: '', end: '' }
   });
 
@@ -38,15 +39,51 @@ const Reports: React.FC = () => {
       setLoading(true);
       const response = await reportService.getReports({ projectId: currentProject.id });
       const reportData = Array.isArray(response) ? response : response.data || [];
+      
+      // Debug: Log all unique authors found in the data
+      const allAuthors = new Set();
+      reportData.forEach((report: any) => {
+        if (report.tests) {
+          report.tests.forEach((test: any) => {
+            const author = test.author || test.metadata?.author;
+            if (author && author !== 'Unknown') {
+              allAuthors.add(author);
+            }
+          });
+        }
+      });
+      console.log('All authors found in reports:', Array.from(allAuthors));
+      
       setReports(reportData.sort((a: any, b: any) => 
         new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
       ));
+      
+      // Load artifact counts for each report
+      await loadArtifactCounts(reportData);
     } catch (error) {
       console.error('Error loading reports:', error);
       toast.error('Failed to load reports');
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadArtifactCounts = async (reportData: any[]) => {
+    const counts: Record<string, number> = {};
+    
+    // Load artifact counts for all reports in parallel
+    const promises = reportData.map(async (report: any) => {
+      try {
+        const estimates = await reportService.getExportSizeEstimates(report.id);
+        counts[report.id] = estimates.full.artifactCount || 0;
+      } catch (error) {
+        console.error(`Failed to get artifact count for report ${report.id}:`, error);
+        counts[report.id] = 0;
+      }
+    });
+    
+    await Promise.all(promises);
+    setArtifactCounts(counts);
   };
 
   const applyFilters = () => {
@@ -77,13 +114,24 @@ const Reports: React.FC = () => {
       filtered = filtered.filter(report => filters.framework.includes(report.framework));
     }
 
-    // Author filter
-    if (filters.author.length > 0) {
+    // Author text filter with regex support
+    if (filters.authorText) {
       filtered = filtered.filter(report => {
         if (!report.tests) return false;
         return report.tests.some((test: any) => {
           const author = test.author || test.metadata?.author;
-          return author && filters.author.includes(author);
+          if (!author) return false;
+          
+          try {
+            // Clean up the filter text by trimming spaces around | operators
+            const cleanedPattern = filters.authorText.replace(/\s*\|\s*/g, '|').trim();
+            // Create regex from the filter text (case-insensitive)
+            const regex = new RegExp(cleanedPattern, 'i');
+            return regex.test(author);
+          } catch (error) {
+            // If regex is invalid, fall back to simple string matching
+            return author.toLowerCase().includes(filters.authorText.toLowerCase());
+          }
         });
       });
     }
@@ -130,15 +178,64 @@ const Reports: React.FC = () => {
     return [...new Set(authors)];
   };
 
-  const exportReport = (report: any) => {
-    const dataStr = JSON.stringify(report, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `report-${report.id}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
+  const exportReportAsJSON = async (report: any) => {
+    try {
+      toast.loading('Generating JSON report...', { id: 'json-export' });
+      await reportService.exportToJSON(report.id);
+      toast.success('JSON report downloaded successfully!', { id: 'json-export' });
+    } catch (error: any) {
+      console.error('JSON export failed:', error);
+      toast.error(error.message || 'Failed to export JSON report', { id: 'json-export' });
+    }
+  };
+
+  const exportReportAsPDF = async (report: any) => {
+    try {
+      toast.loading('Generating PDF report...', { id: 'pdf-export' });
+      await reportService.exportToPDF(report.id);
+      toast.success('PDF report downloaded successfully!', { id: 'pdf-export' });
+    } catch (error: any) {
+      console.error('PDF export failed:', error);
+      toast.error(error.message || 'Failed to export PDF report', { id: 'pdf-export' });
+    }
+  };
+
+  // Export HTML without artifacts (lite version)
+  const exportReport = async (report: any) => {
+    try {
+      toast.loading('Generating HTML report...', { id: 'html-export' });
+      
+      // Export as lite version (no artifacts)
+      const exportResult = await reportService.exportToHTML(report.id, false);
+      
+      toast.success('HTML report export generated successfully!', { id: 'html-export' });
+      
+      // Auto-download the export
+      await reportService.downloadHTMLExport(report.id, exportResult.exportId);
+      
+    } catch (error: any) {
+      console.error('HTML export failed:', error);
+      toast.error(error.message || 'Failed to export HTML report', { id: 'html-export' });
+    }
+  };
+
+  // Export HTML with artifacts (full version)
+  const exportReportWithArtifacts = async (report: any) => {
+    try {
+      toast.loading('Generating HTML report with artifacts...', { id: 'html-with-artifacts-export' });
+      
+      // Export with artifacts included
+      const exportResult = await reportService.exportToHTML(report.id, true);
+      
+      toast.success('HTML report with artifacts generated successfully!', { id: 'html-with-artifacts-export' });
+      
+      // Auto-download the export
+      await reportService.downloadHTMLExport(report.id, exportResult.exportId);
+      
+    } catch (error: any) {
+      console.error('HTML with artifacts export failed:', error);
+      toast.error(error.message || 'Failed to export HTML report with artifacts', { id: 'html-with-artifacts-export' });
+    }
   };
 
   if (loading) {
@@ -151,8 +248,19 @@ const Reports: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Test Reports</h1>
+        <div className="flex items-center space-x-3">
+          <FileText className="w-8 h-8 text-green-600" />
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Test Reports
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400">
+              View and analyze test execution reports
+            </p>
+          </div>
+        </div>
         <div className="flex items-center space-x-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -259,13 +367,79 @@ const Reports: React.FC = () => {
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => exportReport(report)}
-                    className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                    title="Export Report"
-                  >
-                    <Download className="w-4 h-4" />
-                  </button>
+                  {/* PDF Export */}
+                  <div className="relative group">
+                    <button
+                      onClick={() => exportReportAsPDF(report)}
+                      className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      Export as PDF - Complete test report with formatted layout
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900"></div>
+                    </div>
+                  </div>
+                  
+                  {/* JSON Export */}
+                  <div className="relative group">
+                    <button
+                      onClick={() => exportReportAsJSON(report)}
+                      className="p-2 text-gray-400 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+                    >
+                      <File className="w-4 h-4" />
+                    </button>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      Export as JSON - Raw test data for programmatic use
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900"></div>
+                    </div>
+                  </div>
+                  
+                  {/* HTML Lite Export */}
+                  <div className="relative group">
+                    <button
+                      onClick={() => exportReport(report)}
+                      className="p-2 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      <Globe className="w-4 h-4" />
+                    </button>
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      Export as HTML - Interactive web report (no artifacts)
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900"></div>
+                    </div>
+                  </div>
+                  
+                  {/* HTML Full Export with Artifacts */}
+                  <div className="relative group">
+                    <button
+                      onClick={() => {
+                        const artifactCount = artifactCounts[report.id] ?? -1; // -1 means loading
+                        if (artifactCount > 0) {
+                          exportReportWithArtifacts(report);
+                        }
+                      }}
+                      disabled={artifactCounts[report.id] === 0}
+                      className={`p-2 transition-colors ${
+                        artifactCounts[report.id] === 0
+                          ? 'text-gray-300 dark:text-gray-600 cursor-not-allowed'
+                          : artifactCounts[report.id] === undefined
+                          ? 'text-gray-400 opacity-50'
+                          : 'text-gray-400 hover:text-purple-600 dark:hover:text-purple-400'
+                      }`}
+                    >
+                      <Archive className="w-4 h-4" />
+                    </button>
+                    {/* Custom tooltip */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 dark:bg-gray-900 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                      {artifactCounts[report.id] === undefined
+                        ? 'Loading artifact information...'
+                        : artifactCounts[report.id] === 0
+                        ? 'No artifacts available in this report'
+                        : `Export as HTML with Artifacts - Complete report with screenshots, videos, and traces (${artifactCounts[report.id]} artifacts)`
+                      }
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-800 dark:border-t-gray-900"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

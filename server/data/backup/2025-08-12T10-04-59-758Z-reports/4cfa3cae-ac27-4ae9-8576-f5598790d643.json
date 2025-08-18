@@ -1,0 +1,175 @@
+{
+  "id": "4cfa3cae-ac27-4ae9-8576-f5598790d643",
+  "testSuite": "Login",
+  "environment": "development",
+  "framework": "Playwright",
+  "tags": [
+    "salesforce",
+    "e2e",
+    "playwright",
+    "automation"
+  ],
+  "metadata": {
+    "browser": "chromium",
+    "parallel": false,
+    "workers": 1,
+    "version": "1.0.0",
+    "projectInfo": {
+      "id": "playwright-salesforce-default",
+      "name": "Salesforce Playwright Tests",
+      "type": "playwright"
+    }
+  },
+  "projectId": "playwright-salesforce-default",
+  "projectName": "Salesforce Playwright Tests",
+  "projectType": "playwright",
+  "status": "completed",
+  "startTime": "2025-08-10T03:23:14.353Z",
+  "tests": [
+    {
+      "name": "chromium › smoke/login.spec.ts › @smoke Salesforce Login › Login with valid credentials should show App Launcher button",
+      "status": "failed",
+      "duration": 1131,
+      "startTime": "2025-08-10T03:23:14.758Z",
+      "endTime": "2025-08-10T03:23:15.889Z",
+      "errorMessage": "SyntaxError: Unexpected non-whitespace character after JSON at position 255",
+      "stackTrace": "SyntaxError: Unexpected non-whitespace character after JSON at position 255\n    at Object.page (/Users/babu/Desktop/playwright-salesforce/support/reporting-plugin.ts:149:16)",
+      "steps": [
+        {
+          "name": "Before Hooks",
+          "status": "failed",
+          "duration": 1140,
+          "error": "SyntaxError: Unexpected non-whitespace character after JSON at position 255",
+          "category": "hook",
+          "order": 1
+        },
+        {
+          "name": "After Hooks",
+          "status": "passed",
+          "duration": 76,
+          "error": null,
+          "category": "hook",
+          "order": 2
+        },
+        {
+          "name": "Worker Cleanup",
+          "status": "passed",
+          "duration": 9,
+          "error": null,
+          "category": "hook",
+          "order": 3
+        }
+      ],
+      "artifacts": [
+        {
+          "id": "bcd9966c-b83d-44f9-b6e9-49111156b67c",
+          "type": "screenshot",
+          "filename": "test-failed-1.png",
+          "url": "http://localhost:3001/api/tests/artifacts/269d5242-02d1-4c98-8157-81ab291200d0-test-failed-1.png",
+          "uploadedAt": "2025-08-10T03:23:15.898Z"
+        },
+        {
+          "id": "182ec94b-0b65-4182-9126-ba1e59824e2c",
+          "type": "video",
+          "filename": "video.webm",
+          "url": "http://localhost:3001/api/tests/artifacts/eaf4b72f-206b-48aa-832d-f955552d9283-video.webm",
+          "uploadedAt": "2025-08-10T03:23:15.901Z"
+        },
+        {
+          "id": "584443ba-3bac-47be-a5a4-9ceaff0e5bd0",
+          "type": "trace",
+          "filename": "trace.zip",
+          "url": "http://localhost:3001/api/tests/artifacts/26b787c9-d6e1-43b0-855e-bf2adca465a2-trace.zip",
+          "uploadedAt": "2025-08-10T03:23:15.904Z"
+        }
+      ],
+      "annotations": [],
+      "metadata": {
+        "file": "/Users/babu/Desktop/playwright-salesforce/tests/smoke/login.spec.ts",
+        "line": 14,
+        "column": 7,
+        "retries": 0,
+        "parallelIndex": 0,
+        "author": "Unknown"
+      }
+    },
+    {
+      "name": "chromium › smoke/login.spec.ts › @smoke Salesforce Login › Login with invalid credentials should show login error",
+      "status": "failed",
+      "duration": 1119,
+      "startTime": "2025-08-10T03:23:16.300Z",
+      "endTime": "2025-08-10T03:23:17.419Z",
+      "errorMessage": "SyntaxError: Unexpected non-whitespace character after JSON at position 255",
+      "stackTrace": "SyntaxError: Unexpected non-whitespace character after JSON at position 255\n    at Object.page (/Users/babu/Desktop/playwright-salesforce/support/reporting-plugin.ts:149:16)",
+      "steps": [
+        {
+          "name": "Before Hooks",
+          "status": "failed",
+          "duration": 1134,
+          "error": "SyntaxError: Unexpected non-whitespace character after JSON at position 255",
+          "category": "hook",
+          "order": 1
+        },
+        {
+          "name": "After Hooks",
+          "status": "passed",
+          "duration": 72,
+          "error": null,
+          "category": "hook",
+          "order": 2
+        },
+        {
+          "name": "Worker Cleanup",
+          "status": "passed",
+          "duration": 9,
+          "error": null,
+          "category": "hook",
+          "order": 3
+        }
+      ],
+      "artifacts": [
+        {
+          "id": "e22c2eff-b037-4c33-b47a-f5931551be5e",
+          "type": "screenshot",
+          "filename": "test-failed-1.png",
+          "url": "http://localhost:3001/api/tests/artifacts/c41dd1c0-c0c8-40fd-ab8d-d4aa425d7bff-test-failed-1.png",
+          "uploadedAt": "2025-08-10T03:23:17.423Z"
+        },
+        {
+          "id": "1a490cc8-5602-45bf-998b-966802c29115",
+          "type": "video",
+          "filename": "video.webm",
+          "url": "http://localhost:3001/api/tests/artifacts/cc68bcc4-5e7d-4b64-a848-40668552432e-video.webm",
+          "uploadedAt": "2025-08-10T03:23:17.426Z"
+        },
+        {
+          "id": "edb6571b-fb07-4a20-bf2c-d1a598eaf329",
+          "type": "trace",
+          "filename": "trace.zip",
+          "url": "http://localhost:3001/api/tests/artifacts/df9fbeec-f733-4403-82d8-830f79d1fa00-trace.zip",
+          "uploadedAt": "2025-08-10T03:23:17.429Z"
+        }
+      ],
+      "annotations": [],
+      "metadata": {
+        "file": "/Users/babu/Desktop/playwright-salesforce/tests/smoke/login.spec.ts",
+        "line": 21,
+        "column": 7,
+        "retries": 0,
+        "parallelIndex": 0,
+        "author": "Unknown"
+      }
+    }
+  ],
+  "summary": {
+    "total": 2,
+    "passed": 0,
+    "failed": 2,
+    "skipped": 0,
+    "duration": 3089,
+    "passRate": 0,
+    "startTime": "2025-08-10T03:23:14.337Z",
+    "endTime": "2025-08-10T03:23:17.442Z"
+  },
+  "endTime": "2025-08-10T03:23:17.442Z"
+}
