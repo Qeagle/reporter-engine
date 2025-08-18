@@ -125,7 +125,7 @@ Reporter Engine is a comprehensive test reporting solution that provides real-ti
    GROQ_API_KEY=your_groq_api_key_here
    
    # Server configuration
-   CLIENT_URL=http://localhost:5173
+   CLIENT_URL=http://localhost
    PORT=3001
    ```
 
@@ -135,12 +135,12 @@ Reporter Engine is a comprehensive test reporting solution that provides real-ti
    ```
 
 5. **Access the application**
-   - Frontend: http://localhost:5173
+   - Frontend: http://localhost (port 80)
    - Backend API: http://localhost:3001
    - Health check: http://localhost:3001/api/health
 
 ### Default Login
-- **Username**: `admin`
+- **Username**: `admin@example.com`
 - **Password**: `admin123`
 
 ## 📖 Usage Guide
@@ -151,7 +151,7 @@ Reporter Engine provides REST APIs to integrate with any test automation framewo
 
 #### 1. Start a Test Execution
 ```bash
-POST /api/tests/start
+POST http://localhost:3001/api/tests/start
 Content-Type: application/json
 
 {
@@ -168,7 +168,7 @@ Content-Type: application/json
 
 #### 2. Report Test Results
 ```bash
-POST /api/tests/result
+POST http://localhost:3001/api/tests/result
 Content-Type: application/json
 
 {
@@ -187,7 +187,7 @@ Content-Type: application/json
 
 #### 3. Complete Test Execution
 ```bash
-POST /api/tests/complete
+POST http://localhost:3001/api/tests/complete
 Content-Type: application/json
 
 {
@@ -209,21 +209,21 @@ The new failure analysis feature provides intelligent classification of test fai
 
 ```bash
 # Get failure analysis summary
-GET /api/analysis/projects/{projectId}/summary?timeWindow=30
+GET http://localhost:3001/api/analysis/projects/{projectId}/summary?timeWindow=30
 
 # Get classified test case failures
-GET /api/analysis/projects/{projectId}/test-cases?timeWindow=7
+GET http://localhost:3001/api/analysis/projects/{projectId}/test-cases?timeWindow=7
 
 # Get suite-level failure aggregation
-GET /api/analysis/projects/{projectId}/suite-runs?timeWindow=1d
+GET http://localhost:3001/api/analysis/projects/{projectId}/suite-runs?timeWindow=1d
 
 # Get deduplicated failure groups
-GET /api/analysis/projects/{projectId}/groups?timeWindow=8h
+GET http://localhost:3001/api/analysis/projects/{projectId}/groups?timeWindow=8h
 ```
 
 #### Reclassify Failures
 ```bash
-POST /api/analysis/test-cases/{testCaseId}/reclassify
+POST http://localhost:3001/api/analysis/test-cases/{testCaseId}/reclassify
 Content-Type: application/json
 
 {
@@ -246,7 +246,7 @@ Content-Type: application/json
 
 #### Create User Invitations
 ```bash
-POST /api/invitations/create
+POST http://localhost:3001/api/invitations/create
 Content-Type: application/json
 
 {
@@ -258,7 +258,7 @@ Content-Type: application/json
 
 #### Accept Invitation
 ```bash
-POST /api/invitations/{token}/accept
+POST http://localhost:3001/api/invitations/{token}/accept
 Content-Type: application/json
 
 {
@@ -346,7 +346,7 @@ module.exports = (on, config) => {
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
 | `PORT` | Server port | `3001` | No |
-| `CLIENT_URL` | Frontend URL for CORS | `http://localhost:5173` | No |
+| `CLIENT_URL` | Frontend URL for CORS | `http://localhost` | No |
 | `GROQ_API_KEY` | Groq API key for AI analysis | - | No |
 | `OPENAI_API_KEY` | OpenAI API key (alternative to Groq) | - | No |
 | `NODE_ENV` | Environment mode | `development` | No |
@@ -413,23 +413,23 @@ Full API documentation is available at `/api/docs` when running the server.
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/api/health` | Health check |
-| `POST` | `/api/auth/login` | User authentication |
-| `GET` | `/api/projects` | List projects |
-| `POST` | `/api/tests/start` | Start test execution |
-| `POST` | `/api/tests/result` | Report test result |
-| `POST` | `/api/tests/complete` | Complete execution |
-| `GET` | `/api/reports` | List reports |
-| `GET` | `/api/reports/:id` | Get report details |
-| `GET` | `/api/analysis/projects/:id/summary` | Get failure analysis summary |
-| `GET` | `/api/analysis/projects/:id/test-cases` | Get classified test failures |
-| `GET` | `/api/analysis/projects/:id/suite-runs` | Get suite-level failure analysis |
-| `GET` | `/api/analysis/projects/:id/groups` | Get deduplicated failure groups |
-| `POST` | `/api/analysis/test-cases/:id/reclassify` | Manually reclassify a failure |
-| `POST` | `/api/invitations/create` | Create user invitation |
-| `GET` | `/api/invitations/list` | List invitations |
-| `POST` | `/api/invitations/:token/accept` | Accept invitation |
-| `POST` | `/api/invitations/:id/revoke` | Revoke invitation |
+| `GET` | `http://localhost:3001/api/health` | Health check |
+| `POST` | `http://localhost:3001/api/auth/login` | User authentication |
+| `GET` | `http://localhost:3001/api/projects` | List projects |
+| `POST` | `http://localhost:3001/api/tests/start` | Start test execution |
+| `POST` | `http://localhost:3001/api/tests/result` | Report test result |
+| `POST` | `http://localhost:3001/api/tests/complete` | Complete execution |
+| `GET` | `http://localhost:3001/api/reports` | List reports |
+| `GET` | `http://localhost:3001/api/reports/:id` | Get report details |
+| `GET` | `http://localhost:3001/api/analysis/projects/:id/summary` | Get failure analysis summary |
+| `GET` | `http://localhost:3001/api/analysis/projects/:id/test-cases` | Get classified test failures |
+| `GET` | `http://localhost:3001/api/analysis/projects/:id/suite-runs` | Get suite-level failure analysis |
+| `GET` | `http://localhost:3001/api/analysis/projects/:id/groups` | Get deduplicated failure groups |
+| `POST` | `http://localhost:3001/api/analysis/test-cases/:id/reclassify` | Manually reclassify a failure |
+| `POST` | `http://localhost:3001/api/invitations/create` | Create user invitation |
+| `GET` | `http://localhost:3001/api/invitations/list` | List invitations |
+| `POST` | `http://localhost:3001/api/invitations/:token/accept` | Accept invitation |
+| `POST` | `http://localhost:3001/api/invitations/:id/revoke` | Revoke invitation |
 
 ## 🔒 Security
 

@@ -157,6 +157,39 @@ const Login: React.FC = () => {
               {isLogin ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
             </button>
           </div>
+
+          {/* Demo Credentials */}
+          <div className="mt-6 p-4 bg-blue-50 dark:bg-gray-800 border border-blue-200 dark:border-gray-700 rounded-lg">
+            <h3 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-2">
+              Demo Credentials
+            </h3>
+            <div className="space-y-1 text-xs text-blue-700 dark:text-blue-400">
+              <div className="flex justify-between">
+                <span className="font-medium">Email:</span>
+                <span className="font-mono bg-blue-100 dark:bg-gray-700 px-2 py-1 rounded">
+                  admin@example.com
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-medium">Password:</span>
+                <span className="font-mono bg-blue-100 dark:bg-gray-700 px-2 py-1 rounded">
+                  admin123
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setFormData({
+                  email: 'admin@example.com',
+                  password: 'admin123'
+                });
+              }}
+              className="mt-2 w-full text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium transition-colors duration-200"
+            >
+              Click to auto-fill credentials
+            </button>
+          </div>
         </form>
       </div>
     </div>

@@ -24,7 +24,7 @@ const defaultSettings: Settings = {
   brandName: 'QReport',
   primaryColor: '#6D2366',
   logo: '',
-  footer: 'Powered by Qeagle',
+  footer: 'Powered by Reporter Engine',
   webhooks: [],
   notifications: {
     email: true,
