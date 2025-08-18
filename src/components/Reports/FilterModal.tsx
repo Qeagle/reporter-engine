@@ -12,7 +12,6 @@ interface FilterModalProps {
 export interface FilterOptions {
   status: string[];
   environment: string[];
-  framework: string[];
   authorText: string; // Regex text search for authors
   dateRange: {
     start: string;
@@ -61,7 +60,6 @@ const FilterModal: React.FC<FilterModalProps> = ({
   const statuses = getUniqueValues('status');
   const environments = getUniqueValues('environment');
   const frameworks = getUniqueValues('framework');
-
   const handleFilterChange = (category: keyof FilterOptions, value: string) => {
     if (category === 'dateRange') return;
     
