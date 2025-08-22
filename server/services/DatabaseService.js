@@ -283,7 +283,7 @@ class DatabaseService {
     }
     return testRun;
   }
-
+  
   findTestRunByKey(run_key) {
     const stmt = this.db.prepare('SELECT * FROM test_runs WHERE run_key = ?');
     const testRun = stmt.get(run_key);
@@ -374,6 +374,52 @@ class DatabaseService {
       testCase.metadata = JSON.parse(testCase.metadata || '{}');
     }
     return testCase;
+  }
+
+  updateTestCase(testCaseId, updateData) {
+    const fields = [];
+    const values = [];
+    
+    // Build dynamic update query based on provided fields
+    if (updateData.status !== undefined) {
+      fields.push('status = ?');
+      values.push(updateData.status);
+    }
+    if (updateData.duration !== undefined) {
+      fields.push('duration = ?');
+      values.push(updateData.duration);
+    }
+    if (updateData.end_time !== undefined) {
+      fields.push('end_time = ?');
+      values.push(updateData.end_time);
+    }
+    if (updateData.error_message !== undefined) {
+      fields.push('error_message = ?');
+      values.push(updateData.error_message);
+    }
+    if (updateData.stack_trace !== undefined) {
+      fields.push('stack_trace = ?');
+      values.push(updateData.stack_trace);
+    }
+    if (updateData.annotations !== undefined) {
+      fields.push('annotations = ?');
+      values.push(JSON.stringify(updateData.annotations));
+    }
+    if (updateData.metadata !== undefined) {
+      fields.push('metadata = ?');
+      values.push(JSON.stringify(updateData.metadata));
+    }
+    
+    if (fields.length === 0) {
+      throw new Error('No fields to update');
+    }
+    
+    values.push(testCaseId); // Add ID for WHERE clause
+    
+    const stmt = this.db.prepare(`UPDATE test_cases SET ${fields.join(', ')} WHERE id = ?`);
+    const result = stmt.run(...values);
+    
+    return result.changes > 0;
   }
 
   // Test step operations

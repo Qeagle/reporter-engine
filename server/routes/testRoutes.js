@@ -48,8 +48,9 @@ const testController = new TestController();
 router.post('/start', authMiddleware, testController.startTestExecution.bind(testController));
 router.post('/result', authMiddleware, testController.reportTestResult.bind(testController));
 router.post('/update', authMiddleware, testController.updateTestExecution.bind(testController));
+router.post('/status', authMiddleware, testController.updateTestStatus.bind(testController));
 router.post('/complete', authMiddleware, testController.completeTestExecution.bind(testController));
-router.post('/artifact', authMiddleware, upload.single('file'), testController.uploadArtifact.bind(testController));
+router.post('/artifact', upload.single('file'), testController.uploadArtifact.bind(testController));
 
 // Test step endpoints
 router.post('/step', authMiddleware, testController.addTestStep.bind(testController));

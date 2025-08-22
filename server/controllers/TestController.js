@@ -182,17 +182,17 @@ class TestController {
       } = req.body;
 
       const userId = req.user?.id || 1;
-      const testRun = this.dbService.getTestRunById(reportId);
+      const testRun = this.dbService.findTestRunByKey(reportId);
       
       if (!testRun) {
         return res.status(404).json({
           success: false,
-          error: 'Test run not found'
+          error: 'Test execution not found'
         });
       }
 
       // Check permissions
-      if (!this.dbService.checkProjectPermission(userId, testRun.project_id, 'write')) {
+      if (!this.dbService.userHasProjectPermission(userId, testRun.project_id, 'test.write')) {
         return res.status(403).json({
           success: false,
           error: 'Insufficient permissions to update this test run'
@@ -204,7 +204,7 @@ class TestController {
       if (testResult) {
         // New structure from Playwright reporter
         testData = {
-          test_run_id: reportId,
+          test_run_id: testRun.id,
           name: testResult.name,
           status: testResult.status,
           duration: testResult.duration || 0,
@@ -219,7 +219,7 @@ class TestController {
       } else {
         // Legacy structure
         testData = {
-          test_run_id: reportId,
+          test_run_id: testRun.id,
           name: testName,
           status,
           duration: duration || 0,
@@ -232,7 +232,7 @@ class TestController {
       }
 
       // Create or update test case
-      let testCase = this.dbService.getTestCaseByName(reportId, testData.name);
+      let testCase = this.dbService.findTestCaseByName(testRun.id, testData.name);
       if (testCase) {
         this.dbService.updateTestCase(testCase.id, testData);
       } else {
@@ -336,80 +336,148 @@ class TestController {
     }
   }
 
+  async updateTestStatus(req, res) {
+    try {
+      const { 
+        reportId, 
+        testName, 
+        status, 
+        duration, 
+        error,
+        stackTrace 
+      } = req.body;
+
+      const userId = req.user?.id || 1;
+      const testRun = this.dbService.findTestRunByKey(reportId);
+      
+      if (!testRun) {
+        return res.status(404).json({
+          success: false,
+          error: 'Test execution not found'
+        });
+      }
+
+      // Check permissions
+      if (!this.dbService.userHasProjectPermission(userId, testRun.project_id, 'test.write')) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions to update test status'
+        });
+      }
+
+      // Find existing test case
+      const testCase = this.dbService.findTestCaseByName(testRun.id, testName);
+      
+      if (!testCase) {
+        return res.status(404).json({
+          success: false,
+          error: 'Test case not found'
+        });
+      }
+
+      // Update only the status, duration, error, and end time
+      const updateData = {
+        status,
+        duration: duration || testCase.duration,
+        end_time: moment().toISOString(),
+        error_message: error || testCase.error_message,
+        stack_trace: stackTrace || testCase.stack_trace
+      };
+
+      this.dbService.updateTestCase(testCase.id, updateData);
+
+      // Real-time update
+      const webSocketService = req.app.locals.webSocketService;
+      if (webSocketService) {
+        webSocketService.emitToRoom(`report-${reportId}`, 'test-status-updated', {
+          reportId,
+          testName,
+          status,
+          duration
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Test status updated successfully'
+      });
+    } catch (error) {
+      console.error('Error updating test status:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to update test status'
+      });
+    }
+  }
+
   async uploadArtifact(req, res) {
     try {
       const { reportId, testName, type: artifactType } = req.body;
       const file = req.file;
-      const userId = req.user?.id || 1;
+
+      console.log(`📎 Artifact upload request:`, {
+        reportId,
+        testName,
+        artifactType,
+        filename: file?.originalname,
+        size: file?.size,
+        path: file?.path
+      });
 
       if (!file) {
+        console.log(`❌ No file uploaded`);
         return res.status(400).json({
           success: false,
           error: 'No file uploaded'
         });
       }
 
-      const testRun = this.dbService.getTestRunById(reportId);
+      // Find the test run by report ID
+      const testRun = this.dbService.findTestRunByKey(reportId);
       if (!testRun) {
+        console.log(`❌ Test run not found: ${reportId}`);
         return res.status(404).json({
           success: false,
           error: 'Test run not found'
         });
       }
 
-      // Check permissions
-      if (!this.dbService.checkProjectPermission(userId, testRun.project_id, 'write')) {
-        return res.status(403).json({
+      // Find the test case by name and test run ID
+      const testCase = this.dbService.findTestCaseByName(testRun.id, testName);
+      if (!testCase) {
+        console.log(`❌ Test case not found: ${testName} in test run ${testRun.id}`);
+        return res.status(404).json({
           success: false,
-          error: 'Insufficient permissions to upload artifacts to this test run'
+          error: 'Test case not found'
         });
       }
 
-      // Upload to Azure Blob Storage
-      let blobUrl = null;
-      try {
-        blobUrl = await this.azureBlobService.uploadArtifact(
-          reportId,
-          file.filename,
-          file.path,
-          artifactType || 'attachment',
-          testName
-        );
-      } catch (uploadError) {
-        console.warn('Failed to upload to Azure Blob Storage:', uploadError.message);
-        // Fallback to local file path
-        blobUrl = `/api/test/artifacts/${file.filename}`;
-      }
+      // Create artifact record in database
+      const artifactData = {
+        test_case_id: testCase.id,
+        artifact_id: uuidv4(),
+        type: artifactType,
+        filename: file.originalname,
+        url: `/api/tests/artifacts/${file.filename}`,
+        uploaded_at: new Date().toISOString()
+      };
 
-      // Update test case with artifact reference
-      const testCase = this.dbService.getTestCaseByName(reportId, testName);
-      if (testCase) {
-        const artifacts = JSON.parse(testCase.artifacts || '[]');
-        artifacts.push({
-          id: uuidv4(),
-          type: artifactType || 'attachment',
-          filename: file.originalname,
-          url: blobUrl,
-          uploadedAt: moment().toISOString()
-        });
+      const artifact = this.dbService.createTestArtifact(artifactData);
+      
+      console.log(`✅ Artifact uploaded and saved to database: ${file.originalname} -> ${artifactData.url}`);
 
-        this.dbService.updateTestCase(testCase.id, {
-          artifacts: JSON.stringify(artifacts)
-        });
-      } else {
-        console.log(`⚠️ Test case not found for artifact: ${testName}`);
-      }
-
-      res.json({
+      return res.status(200).json({
         success: true,
-        artifactUrl: blobUrl,
+        artifactUrl: artifactData.url,
+        artifactId: artifact.artifact_id,
         message: 'Artifact uploaded successfully'
       });
+
     } catch (error) {
-      console.error('Error uploading artifact:', error);
-      res.status(500).json({
+      console.error('❌ Error uploading artifact:', error.stack || error.message || error);
+      return res.status(500).json({
         success: false,
-        error: 'Failed to upload artifact'
+        error: error.message || 'Failed to upload artifact'
       });
     }
   }
@@ -497,7 +565,7 @@ class TestController {
       const { reportId, tests } = req.body;
       const userId = req.user?.id || 1;
 
-      const testRun = this.dbService.getTestRunById(reportId);
+      const testRun = this.dbService.findTestRunByKey(reportId);
       if (!testRun) {
         return res.status(404).json({
           success: false,
@@ -506,7 +574,7 @@ class TestController {
       }
 
       // Check permissions
-      if (!this.dbService.checkProjectPermission(userId, testRun.project_id, 'write')) {
+      if (!this.dbService.userHasProjectPermission(userId, testRun.project_id, 'test.write')) {
         return res.status(403).json({
           success: false,
           error: 'Insufficient permissions to update this test run'
@@ -560,18 +628,18 @@ class TestController {
 
   // Helper method to get report data for archiving
   getReportData(reportId) {
-    const testRun = this.dbService.getTestRunById(reportId);
-    const testCases = this.dbService.getTestCasesByRunId(reportId);
+    const testRun = this.dbService.findTestRunByKey(reportId);
+    const testCases = this.dbService.getTestCasesByRun(testRun?.id);
     
     return {
       ...testRun,
-      tests: testCases.map(tc => ({
+      tests: testCases?.map(tc => ({
         ...tc,
         steps: JSON.parse(tc.steps || '[]'),
         artifacts: JSON.parse(tc.artifacts || '[]'),
         metadata: JSON.parse(tc.metadata || '{}')
-      })),
-      summary: JSON.parse(testRun.summary || '{}')
+      })) || [],
+      summary: JSON.parse(testRun?.summary || '{}')
     };
   }
 }
