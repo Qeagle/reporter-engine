@@ -119,14 +119,21 @@ Reporter Engine is a comprehensive test reporting solution that provides real-ti
    cp .env.example .env
    ```
    
-   Edit `.env` with your configuration:
+   Edit `.env` with your configuration (minimum required):
    ```bash
-   # Required for AI features (optional)
+   # Server Configuration
+   NODE_ENV=development
+   PORT=3001
+   CLIENT_URL=http://localhost
+   
+   # JWT Authentication (IMPORTANT: Change in production!)
+   JWT_SECRET=your-secret-key-change-in-production
+   
+   # Optional: AI features
    GROQ_API_KEY=your_groq_api_key_here
    
-   # Server configuration
-   CLIENT_URL=http://localhost
-   PORT=3001
+   # Optional: Email notifications
+   SEND_EMAILS=false
    ```
 
 4. **Start the application**
@@ -139,68 +146,308 @@ Reporter Engine is a comprehensive test reporting solution that provides real-ti
    - Backend API: http://localhost:3001
    - Health check: http://localhost:3001/api/health
 
-### Default Login
+### Initial Setup & Authentication
+
+#### Option 1: Use Default Admin Account (Recommended)
+The system comes with a pre-configured admin account:
 - **Username**: `admin@example.com`
 - **Password**: `admin123`
 
+#### Option 2: Windows Installation Setup
+If you're running on Windows and having issues with the default setup:
+
+1. **Start Backend Server**
+   ```bash
+   cd reporter-engine
+   node server/index.js
+   ```
+
+2. **Start Frontend (in separate terminal)**
+   ```bash
+   npm run frontend
+   ```
+
+3. **Get Authentication Token**
+   ```bash
+   curl -X POST http://localhost:3001/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{"username": "admin@example.com", "password": "admin123"}'
+   ```
+
+   **Response:**
+   ```json
+   {
+     "success": true,
+     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+     "user": {
+       "id": 1,
+       "username": "admin@example.com",
+       "role": "admin"
+     }
+   }
+   ```
+
+4. **Use the token for subsequent API calls**
+   ```bash
+   Authorization: Bearer <your-token-here>
+   ```
+
+#### Creating Additional Users
+
+1. **Create User Invitation (Admin Required)**
+   ```bash
+   curl -X POST http://localhost:3001/api/invitations/create \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer <admin-token>" \
+     -d '{
+       "email": "user@company.com",
+       "projectId": 1,
+       "projectRoleId": 2
+     }'
+   ```
+
+2. **Accept Invitation (New User)**
+   ```bash
+   curl -X POST http://localhost:3001/api/invitations/<invitation-token>/accept \
+     -H "Content-Type: application/json" \
+     -d '{
+       "name": "John Doe",
+       "password": "securepassword"
+     }'
+   ```
+
 ## 📖 Usage Guide
+
+### Authentication Setup
+
+#### Getting Your First Token
+Before using any API endpoints, you need to authenticate:
+
+```bash
+# Login with default admin account
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin@example.com",
+    "password": "admin123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTU4Mjg4NDEsImV4cCI6MTc1NTkxNTI0MX0.yH0a3zeAC1vrx57M6DRMTtoGaVZ-oET66jjv3wnH8A4",
+  "user": {
+    "id": 1,
+    "username": "admin@example.com",
+    "email": "admin@example.com",
+    "role": "admin"
+  }
+}
+```
+
+**Save the token and use it in all subsequent API calls:**
+```bash
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+### Complete Test Reporting Workflow
+
+#### 1. Start a Test Execution
+```bash
+curl -X POST http://localhost:3001/api/tests/start \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-token>" \
+  -d '{
+    "testSuite": "E2E Shopping Cart Tests",
+    "environment": "staging",
+    "framework": "Playwright",
+    "project": {
+      "id": 1,
+      "name": "E-commerce Platform",
+      "type": "web"
+    },
+    "tags": ["smoke", "critical", "cart"],
+    "metadata": {
+      "browser": "chromium",
+      "headless": true,
+      "viewport": "1920x1080",
+      "parallel": 4
+    }
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "reportId": "ed1b5bca-47af-479d-8759-cd0824581aee",
+  "message": "Test execution started successfully"
+}
+```
+
+#### 2. Report Individual Test Results
+```bash
+curl -X POST http://localhost:3001/api/tests/result \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-token>" \
+  -d '{
+    "executionId": "ed1b5bca-47af-479d-8759-cd0824581aee",
+    "testName": "Add Product to Cart",
+    "status": "passed",
+    "duration": 2500,
+    "error": null,
+    "stackTrace": null,
+    "screenshots": ["add-to-cart-success.png"],
+    "videos": ["add-to-cart-flow.mp4"],
+    "traces": ["add-to-cart-trace.json"],
+    "metadata": {
+      "productId": "prod-123",
+      "price": "$29.99",
+      "quantity": 2
+    }
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "testId": 100
+  },
+  "message": "Test result reported successfully"
+}
+```
+
+#### 3. Report Test Steps (Optional)
+Add detailed step-by-step execution information:
+
+```bash
+curl -X POST http://localhost:3001/api/tests/step \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-token>" \
+  -d '{
+    "reportId": "ed1b5bca-47af-479d-8759-cd0824581aee",
+    "testName": "Add Product to Cart",
+    "stepName": "Navigate to product page",
+    "status": "passed",
+    "duration": 800,
+    "description": "Navigate to product detail page for iPhone 15"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "step": {
+    "id": 1394,
+    "test_case_id": 100,
+    "step_order": 1,
+    "name": "Navigate to product page",
+    "status": "passed",
+    "duration": 800,
+    "error": null,
+    "category": "action"
+  },
+  "message": "Test step added successfully"
+}
+```
+
+#### 4. Complete Test Execution
+```bash
+curl -X POST http://localhost:3001/api/tests/complete \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-token>" \
+  -d '{
+    "reportId": "ed1b5bca-47af-479d-8759-cd0824581aee",
+    "summary": {
+      "total": 3,
+      "passed": 2,
+      "failed": 1,
+      "skipped": 0,
+      "duration": 9300,
+      "passRate": 67
+    }
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Test execution completed successfully",
+  "summary": {
+    "total": 3,
+    "passed": 2,
+    "failed": 1,
+    "skipped": 0,
+    "duration": 9300,
+    "passRate": 67
+  }
+}
+```
+
+### User Management
+
+#### Create User Invitations (Admin Only)
+```bash
+curl -X POST http://localhost:3001/api/invitations/create \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <admin-token>" \
+  -d '{
+    "email": "mahesh.peddyakudi@company.com",
+    "projectId": 1,
+    "projectRoleId": 2
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "invitation": {
+    "id": 1,
+    "email": "mahesh.peddyakudi@company.com",
+    "token": "inv_abc123def456",
+    "projectId": 1,
+    "projectRoleId": 2,
+    "status": "pending"
+  },
+  "message": "Invitation created successfully"
+}
+```
+
+#### Accept Invitation (New User)
+```bash
+curl -X POST http://localhost:3001/api/invitations/inv_abc123def456/accept \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Mahesh Peddyakudi",
+    "password": "securepassword123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 2,
+    "name": "Mahesh Peddyakudi",
+    "email": "mahesh.peddyakudi@company.com",
+    "role": "member"
+  },
+  "message": "Account created successfully"
+}
+```
 
 ### For Test Framework Integration
 
 Reporter Engine provides REST APIs to integrate with any test automation framework:
-
-#### 1. Start a Test Execution
-```bash
-POST http://localhost:3001/api/tests/start
-Content-Type: application/json
-
-{
-  "projectId": "your-project-id",
-  "testSuite": "smoke-tests",
-  "environment": "staging",
-  "metadata": {
-    "branch": "main",
-    "commit": "abc123",
-    "triggeredBy": "jenkins"
-  }
-}
-```
-
-#### 2. Report Test Results
-```bash
-POST http://localhost:3001/api/tests/result
-Content-Type: application/json
-
-{
-  "executionId": "execution-id-from-start",
-  "testName": "User Login Test",
-  "status": "passed",
-  "duration": 2500,
-  "error": null,
-  "screenshots": ["screenshot1.png"],
-  "metadata": {
-    "browser": "chrome",
-    "viewport": "1920x1080"
-  }
-}
-```
-
-#### 3. Complete Test Execution
-```bash
-POST http://localhost:3001/api/tests/complete
-Content-Type: application/json
-
-{
-  "executionId": "execution-id-from-start",
-  "summary": {
-    "total": 25,
-    "passed": 23,
-    "failed": 2,
-    "skipped": 0,
-    "duration": 120000
-  }
-}
-```
 
 ### Failure Analysis Usage
 
@@ -341,15 +588,127 @@ module.exports = (on, config) => {
 
 ## 🔧 Configuration
 
+### Troubleshooting
+
+#### Windows Setup Issues
+
+**Problem**: Cannot launch backend using `npm run dev`
+
+**Solution 1**: Start services separately
+```bash
+# Terminal 1: Start backend
+node server/index.js
+
+# Terminal 2: Start frontend  
+npm run frontend
+```
+
+**Solution 2**: Use different ports
+```bash
+# Backend on port 3001
+PORT=3001 node server/index.js
+
+# Frontend on port 3000 (if port 80 is occupied)
+npm run frontend -- --port 3000
+```
+
+#### Authentication Issues
+
+**Problem**: "Access denied. No token provided" when creating invitations
+
+**Solution**: Get admin token first
+```bash
+# 1. Login to get token
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin@example.com", "password": "admin123"}'
+
+# 2. Use the token in Authorization header
+curl -X POST http://localhost:3001/api/invitations/create \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-token-here>" \
+  -d '{"email": "user@company.com", "projectId": 1, "projectRoleId": 2}'
+```
+
+**Problem**: Default admin login not working
+
+**Solution**: Check if database is initialized
+```bash
+# Check if database file exists
+ls -la server/data/database.sqlite
+
+# If missing, restart the server to initialize
+node server/index.js
+```
+
+#### API Access Issues
+
+**Problem**: CORS errors when accessing API from different domain
+
+**Solution**: Update CLIENT_URL in .env
+```bash
+CLIENT_URL=http://192.168.0.159
+```
+
+**Problem**: 404 errors on API endpoints
+
+**Solution**: Ensure backend is running and check the correct port
+```bash
+# Test health endpoint
+curl http://localhost:3001/api/health
+
+# Expected response:
+# {"status":"ok","timestamp":"2025-08-22T...","version":"2.0"}
+```
+
 ### Environment Variables
+
+The project uses environment variables for configuration. Copy `.env.example` to `.env` and update the values as needed:
+
+```bash
+cp .env.example .env
+```
+
+#### Core Configuration
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `PORT` | Server port | `3001` | No |
-| `CLIENT_URL` | Frontend URL for CORS | `http://localhost` | No |
-| `GROQ_API_KEY` | Groq API key for AI analysis | - | No |
-| `OPENAI_API_KEY` | OpenAI API key (alternative to Groq) | - | No |
 | `NODE_ENV` | Environment mode | `development` | No |
+| `PORT` | Server port | `3001` | No |
+| `SERVER_HOST` | Server host | `localhost` | No |
+| `CLIENT_URL` | Frontend URL for CORS and invitation links | `http://localhost` | No |
+| `JWT_SECRET` | Secret key for JWT token signing | `your-secret-key-change-in-production` | **Yes** |
+
+#### AI Features (Optional)
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `GROQ_API_KEY` | Groq API key for AI analysis | - | No |
+
+#### Email Configuration (Optional)
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `SEND_EMAILS` | Enable/disable email sending | `false` | No |
+| `SMTP_HOST` | SMTP server host | `localhost` | No |
+| `SMTP_PORT` | SMTP server port | `587` | No |
+| `SMTP_USER` | SMTP username | - | No |
+| `SMTP_PASS` | SMTP password | - | No |
+| `SMTP_FROM` | Email sender address | `noreply@testreport.com` | No |
+
+#### Development Configuration
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `TEST_SUITE` | Default test suite name | `default` | No |
+| `VITE_HMR_HOST` | Vite HMR host | `localhost` | No |
+| `VITE_API_URL` | API URL for frontend | `http://localhost:3001` | No |
+
+#### Production Notes
+
+- **JWT_SECRET**: Must be changed in production to a secure random string
+- **SEND_EMAILS**: Set to `true` in production to enable invitation emails
+- **SMTP Configuration**: Required if `SEND_EMAILS=true`
 
 ### AI Analysis Features
 
@@ -411,25 +770,56 @@ Full API documentation is available at `/api/docs` when running the server.
 
 #### Core Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `http://localhost:3001/api/health` | Health check |
-| `POST` | `http://localhost:3001/api/auth/login` | User authentication |
-| `GET` | `http://localhost:3001/api/projects` | List projects |
-| `POST` | `http://localhost:3001/api/tests/start` | Start test execution |
-| `POST` | `http://localhost:3001/api/tests/result` | Report test result |
-| `POST` | `http://localhost:3001/api/tests/complete` | Complete execution |
-| `GET` | `http://localhost:3001/api/reports` | List reports |
-| `GET` | `http://localhost:3001/api/reports/:id` | Get report details |
-| `GET` | `http://localhost:3001/api/analysis/projects/:id/summary` | Get failure analysis summary |
-| `GET` | `http://localhost:3001/api/analysis/projects/:id/test-cases` | Get classified test failures |
-| `GET` | `http://localhost:3001/api/analysis/projects/:id/suite-runs` | Get suite-level failure analysis |
-| `GET` | `http://localhost:3001/api/analysis/projects/:id/groups` | Get deduplicated failure groups |
-| `POST` | `http://localhost:3001/api/analysis/test-cases/:id/reclassify` | Manually reclassify a failure |
-| `POST` | `http://localhost:3001/api/invitations/create` | Create user invitation |
-| `GET` | `http://localhost:3001/api/invitations/list` | List invitations |
-| `POST` | `http://localhost:3001/api/invitations/:token/accept` | Accept invitation |
-| `POST` | `http://localhost:3001/api/invitations/:id/revoke` | Revoke invitation |
+| Method | Endpoint | Description | Auth Required |
+|--------|----------|-------------|---------------|
+| `GET` | `/api/health` | Health check | No |
+| `POST` | `/api/auth/login` | User authentication | No |
+| `GET` | `/api/docs` | API documentation | No |
+| `GET` | `/api/projects` | List projects | Yes |
+| `POST` | `/api/tests/start` | Start test execution | Yes |
+| `POST` | `/api/tests/result` | Report test result | Yes |
+| `POST` | `/api/tests/step` | Report test step | Yes |
+| `POST` | `/api/tests/complete` | Complete execution | Yes |
+| `POST` | `/api/tests/update` | Update test execution | Yes |
+| `POST` | `/api/tests/artifact` | Upload test artifact | Yes |
+| `POST` | `/api/tests/batch/results` | Batch test results | Yes |
+| `GET` | `/api/reports` | List reports | Yes |
+| `GET` | `/api/reports/:id` | Get report details | Yes |
+| `GET` | `/api/analysis/projects/:id/summary` | Get failure analysis summary | Yes |
+| `GET` | `/api/analysis/projects/:id/test-cases` | Get classified test failures | Yes |
+| `GET` | `/api/analysis/projects/:id/suite-runs` | Get suite-level failure analysis | Yes |
+| `GET` | `/api/analysis/projects/:id/groups` | Get deduplicated failure groups | Yes |
+| `POST` | `/api/analysis/test-cases/:id/reclassify` | Manually reclassify a failure | Yes |
+| `POST` | `/api/invitations/create` | Create user invitation | Yes (Admin) |
+| `GET` | `/api/invitations/list` | List invitations | Yes (Admin) |
+| `POST` | `/api/invitations/:token/accept` | Accept invitation | No |
+| `POST` | `/api/invitations/:id/revoke` | Revoke invitation | Yes (Admin) |
+
+#### API Response Formats
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "data": { /* response data */ },
+  "message": "Operation completed successfully"
+}
+```
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "Error message describing what went wrong"
+}
+```
+
+#### Authentication Headers
+All authenticated endpoints require:
+```bash
+Authorization: Bearer <jwt-token>
+Content-Type: application/json
+```
 
 ## 🔒 Security
 
