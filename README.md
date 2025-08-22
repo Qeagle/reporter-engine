@@ -11,15 +11,22 @@ Reporter Engine is a comprehensive test reporting solution that provides real-ti
 
 ![Dashboard Preview](docs/images/dashboard-preview.png)
 
-## ✨ Features
+## 🔄 Recent Updates
 
-### 🎯 Core Features
-- **Real-time Test Reporting** - Live updates during test execution
-- **Multi-Project Support** - Organize tests across different projects
-- **Interactive Analytics** - Rich charts and metrics visualization
-- **Test Artifacts Management** - Screenshots, videos, and trace files
-- **AI-Powered Analysis** - Automated failure analysis and insights
-- **REST API Integration** - Easy integration with any test framework
+### Artifact Upload Enhancement (Latest)
+- **Fixed artifact upload functionality** - Artifacts (screenshots, videos, traces) are now properly saved to database and displayed in UI
+- **Enhanced database persistence** - Artifact metadata is stored with proper test case associations for seamless retrieval
+- **Improved test status updates** - Added dedicated `/tests/status` endpoint for clean status updates without duplicating test cases
+- **Real-time step reporting** - Steps are published immediately during test execution for live monitoring
+- **Single test case architecture** - Eliminated duplicate test entries with proper status transition management
+- **Enhanced error handling** - Better validation and error messages for artifact upload failures
+- **Database integrity** - Proper foreign key relationships between test cases and artifacts
+
+### Status Update API Enhancement
+- **New `/tests/status` endpoint** - Dedicated endpoint for updating test case status without creating duplicates
+- **Clean status transitions** - Update test status from 'running' to 'passed'/'failed'/'skipped' seamlessly
+- **Optimized database operations** - Uses `updateTestCase` method for efficient status updates
+- **Backward compatibility** - Existing `/tests/result` endpoint continues to work for new test case creation
 
 ### 📊 Analytics & Reporting
 - **Executive Dashboard** - High-level test metrics and trends
@@ -388,6 +395,53 @@ curl -X POST http://localhost:3001/api/tests/complete \
     "passRate": 67
   }
 }
+```
+
+#### 5. Update Test Case Status (New!)
+For updating test case status without creating duplicates:
+
+```bash
+curl -X POST http://localhost:3001/api/tests/status \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <your-token>" \
+  -d '{
+    "reportId": "ed1b5bca-47af-479d-8759-cd0824581aee",
+    "testName": "Add Product to Cart",
+    "status": "passed",
+    "duration": 2500,
+    "endTime": "2025-08-22T08:33:14.676Z"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Test status updated successfully"
+}
+```
+
+#### 6. Upload Test Artifacts (Enhanced!)
+Upload screenshots, videos, or trace files with proper database persistence:
+
+```bash
+curl -X POST http://localhost:3001/api/tests/artifact \
+  -H "Authorization: Bearer <your-token>" \
+  -F "file=@screenshot.png" \
+  -F "reportId=ed1b5bca-47af-479d-8759-cd0824581aee" \
+  -F "testName=Add Product to Cart" \
+  -F "type=screenshot"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "artifactUrl": "/api/tests/artifacts/screenshot-1234567890.png",
+  "artifactId": "artifact-uuid-here",
+  "message": "Artifact uploaded successfully"
+}
+```
 ```
 
 ### User Management
@@ -778,10 +832,11 @@ Full API documentation is available at `/api/docs` when running the server.
 | `GET` | `/api/projects` | List projects | Yes |
 | `POST` | `/api/tests/start` | Start test execution | Yes |
 | `POST` | `/api/tests/result` | Report test result | Yes |
+| `POST` | `/api/tests/status` | Update test case status (New!) | Yes |
 | `POST` | `/api/tests/step` | Report test step | Yes |
 | `POST` | `/api/tests/complete` | Complete execution | Yes |
 | `POST` | `/api/tests/update` | Update test execution | Yes |
-| `POST` | `/api/tests/artifact` | Upload test artifact | Yes |
+| `POST` | `/api/tests/artifact` | Upload test artifact (Enhanced!) | Yes |
 | `POST` | `/api/tests/batch/results` | Batch test results | Yes |
 | `GET` | `/api/reports` | List reports | Yes |
 | `GET` | `/api/reports/:id` | Get report details | Yes |
