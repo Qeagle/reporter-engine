@@ -24,23 +24,19 @@ class TestController {
       const userId = req.user?.id || 1; // Use authenticated user or fallback
 
       // Ensure project exists
-      let projectId = project?.id || 'default';
-      if (projectId === 'default') {
-        // Create or get default project
-        let defaultProject = this.dbService.getProjectByName('Default Project');
-        if (!defaultProject) {
-          defaultProject = this.dbService.createProject({
-            name: 'Default Project',
-            description: 'Default project for uncategorized tests',
-            type: 'unknown',
-            owner_id: userId
-          });
-        }
-        projectId = defaultProject.id;
+      let projectId = project?.id || 1; // Use default project ID 1
+      
+      // Validate project exists
+      const projectExists = this.dbService.findProjectById(projectId);
+      if (!projectExists) {
+        return res.status(400).json({
+          success: false,
+          error: `Project with ID ${projectId} not found`
+        });
       }
 
       // Check if user has permission to create test runs in this project
-      if (!this.dbService.checkProjectPermission(userId, projectId, 'write')) {
+      if (!this.dbService.userHasProjectPermission(userId, projectId, 'test.write')) {
         return res.status(403).json({
           success: false,
           error: 'Insufficient permissions to create test runs in this project'
@@ -49,16 +45,16 @@ class TestController {
 
       // Create test run in database
       const testRun = this.dbService.createTestRun({
-        id: reportId,
         project_id: projectId,
+        run_key: reportId,
+        triggered_by: userId,
         test_suite: testSuite,
         environment,
         framework,
-        tags: JSON.stringify(tags || []),
-        metadata: JSON.stringify(metadata || {}),
+        tags: tags || [],
+        metadata: metadata || {},
         status: 'running',
-        start_time: moment().toISOString(),
-        created_by: userId
+        started_at: moment().toISOString()
       });
 
       // Notify clients via WebSocket
@@ -68,7 +64,11 @@ class TestController {
           reportId,
           testSuite,
           environment,
-          project: { id: projectId, name: project?.name || 'Default Project', type: project?.type || 'unknown' }
+          project: { 
+            id: projectId, 
+            name: projectExists?.name || 'Unknown Project', 
+            type: projectExists?.type || 'unknown' 
+          }
         });
       }
 
@@ -82,6 +82,87 @@ class TestController {
       res.status(500).json({
         success: false,
         error: 'Failed to start test execution'
+      });
+    }
+  }
+
+  async reportTestResult(req, res) {
+    try {
+      const { 
+        executionId,
+        testName, 
+        status, 
+        duration, 
+        error,
+        stackTrace,
+        screenshots,
+        videos,
+        traces,
+        metadata 
+      } = req.body;
+
+      const userId = req.user?.id || 1;
+      const testRun = this.dbService.findTestRunByKey(executionId);
+      
+      if (!testRun) {
+        return res.status(404).json({
+          success: false,
+          error: 'Test execution not found'
+        });
+      }
+
+      // Check permissions
+      if (!this.dbService.userHasProjectPermission(userId, testRun.project_id, 'test.write')) {
+        return res.status(403).json({
+          success: false,
+          error: 'Insufficient permissions to report test results for this execution'
+        });
+      }
+
+      // Create test case data
+      const testData = {
+        test_run_id: testRun.id,
+        suite: 'default',
+        name: testName,
+        status,
+        duration: duration || 0,
+        start_time: moment().toISOString(),
+        end_time: moment().toISOString(),
+        error_message: error,
+        stack_trace: stackTrace,
+        annotations: [],
+        metadata: {
+          ...metadata,
+          screenshots: screenshots || [],
+          videos: videos || [],
+          traces: traces || []
+        }
+      };
+
+      // Create test case
+      const testCase = this.dbService.createTestCase(testData);
+
+      // Real-time update
+      const webSocketService = req.app.locals.webSocketService;
+      if (webSocketService) {
+        webSocketService.emitToRoom(`report-${executionId}`, 'test-result-added', {
+          executionId,
+          test: testData
+        });
+      }
+
+      res.json({
+        success: true,
+        data: {
+          testId: testCase.id
+        },
+        message: 'Test result reported successfully'
+      });
+    } catch (error) {
+      console.error('Error reporting test result:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to report test result'
       });
     }
   }
@@ -185,7 +266,7 @@ class TestController {
       const { reportId, endTime, summary } = req.body;
       const userId = req.user?.id || 1;
 
-      const testRun = this.dbService.getTestRunById(reportId);
+      const testRun = this.dbService.findTestRunByKey(reportId);
       if (!testRun) {
         return res.status(404).json({
           success: false,
@@ -194,7 +275,7 @@ class TestController {
       }
 
       // Check permissions
-      if (!this.dbService.checkProjectPermission(userId, testRun.project_id, 'write')) {
+      if (!this.dbService.userHasProjectPermission(userId, testRun.project_id, 'test.write')) {
         return res.status(403).json({
           success: false,
           error: 'Insufficient permissions to complete this test run'
@@ -204,7 +285,7 @@ class TestController {
       // Calculate summary from test cases if not provided
       let calculatedSummary = summary;
       if (!calculatedSummary) {
-        const testCases = this.dbService.getTestCasesByRunId(reportId);
+        const testCases = this.dbService.getTestCasesByRun(testRun.id);
         calculatedSummary = {
           total: testCases.length,
           passed: testCases.filter(t => t.status === 'passed').length,
@@ -217,10 +298,10 @@ class TestController {
       }
 
       // Update test run
-      this.dbService.updateTestRun(reportId, {
+      this.dbService.updateTestRun(testRun.id, {
         status: 'completed',
-        end_time: endTime || moment().toISOString(),
-        summary: JSON.stringify(calculatedSummary)
+        finished_at: endTime || moment().toISOString(),
+        summary: calculatedSummary
       });
 
       // Archive report to Azure Blob Storage if available
@@ -346,7 +427,7 @@ class TestController {
       } = req.body;
 
       const userId = req.user?.id || 1;
-      const testRun = this.dbService.getTestRunById(reportId);
+      const testRun = this.dbService.findTestRunByKey(reportId);
       
       if (!testRun) {
         return res.status(404).json({
@@ -356,14 +437,14 @@ class TestController {
       }
 
       // Check permissions
-      if (!this.dbService.checkProjectPermission(userId, testRun.project_id, 'write')) {
+      if (!this.dbService.userHasProjectPermission(userId, testRun.project_id, 'test.write')) {
         return res.status(403).json({
           success: false,
           error: 'Insufficient permissions to add steps to this test run'
         });
       }
 
-      const testCase = this.dbService.getTestCaseByName(reportId, testName);
+      const testCase = this.dbService.findTestCaseByName(testRun.id, testName);
       if (!testCase) {
         return res.status(404).json({
           success: false,
@@ -371,22 +452,21 @@ class TestController {
         });
       }
 
-      const step = {
-        id: uuidv4(),
+      // Get current step count to determine step order
+      const existingSteps = this.dbService.getTestStepsByCase(testCase.id);
+      const stepOrder = existingSteps.length + 1;
+
+      const stepData = {
+        test_case_id: testCase.id,
+        step_order: stepOrder,
         name: stepName,
         status,
         duration: duration || 0,
-        timestamp: moment().toISOString(),
-        screenshot,
-        description
+        error: status === 'failed' ? (description || 'Step failed') : null,
+        category: 'action'
       };
 
-      const steps = JSON.parse(testCase.steps || '[]');
-      steps.push(step);
-
-      this.dbService.updateTestCase(testCase.id, {
-        steps: JSON.stringify(steps)
-      });
+      const step = this.dbService.createTestStep(stepData);
 
       // Real-time update
       const webSocketService = req.app.locals.webSocketService;

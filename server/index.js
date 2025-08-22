@@ -23,6 +23,7 @@ import failureAnalysisRoutes from './routes/failureAnalysisRoutes.js';
 import trendRoutes from './routes/trendRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import annotationRoutes from './routes/annotationRoutes.js';
+import docsRoutes from './routes/docsRoutes.js';
 
 // Import middleware
 import authMiddleware from './middleware/authMiddleware.js';
@@ -141,6 +142,7 @@ app.locals.webSocketService = webSocketService;
 app.use('/api/auth', authRoutes);
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/invitations', invitationRoutes);
+app.use('/api/docs', docsRoutes);
 
 // Protected routes
 app.use('/api/tests', testRoutes);

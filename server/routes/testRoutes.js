@@ -46,6 +46,7 @@ const testController = new TestController();
 
 // Test execution endpoints (require authentication)
 router.post('/start', authMiddleware, testController.startTestExecution.bind(testController));
+router.post('/result', authMiddleware, testController.reportTestResult.bind(testController));
 router.post('/update', authMiddleware, testController.updateTestExecution.bind(testController));
 router.post('/complete', authMiddleware, testController.completeTestExecution.bind(testController));
 router.post('/artifact', authMiddleware, upload.single('file'), testController.uploadArtifact.bind(testController));

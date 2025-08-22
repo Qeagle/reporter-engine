@@ -284,6 +284,17 @@ class DatabaseService {
     return testRun;
   }
 
+  findTestRunByKey(run_key) {
+    const stmt = this.db.prepare('SELECT * FROM test_runs WHERE run_key = ?');
+    const testRun = stmt.get(run_key);
+    if (testRun) {
+      testRun.tags = JSON.parse(testRun.tags || '[]');
+      testRun.metadata = JSON.parse(testRun.metadata || '{}');
+      testRun.summary = JSON.parse(testRun.summary || '{}');
+    }
+    return testRun;
+  }
+
   getTestRunsByProject(projectId, limit = 50, offset = 0) {
     const stmt = this.db.prepare(`
       SELECT * FROM test_runs 
@@ -353,6 +364,16 @@ class DatabaseService {
       testCase.metadata = JSON.parse(testCase.metadata || '{}');
       return testCase;
     });
+  }
+
+  findTestCaseByName(testRunId, testName) {
+    const stmt = this.db.prepare('SELECT * FROM test_cases WHERE test_run_id = ? AND name = ?');
+    const testCase = stmt.get(testRunId, testName);
+    if (testCase) {
+      testCase.annotations = JSON.parse(testCase.annotations || '[]');
+      testCase.metadata = JSON.parse(testCase.metadata || '{}');
+    }
+    return testCase;
   }
 
   // Test step operations
