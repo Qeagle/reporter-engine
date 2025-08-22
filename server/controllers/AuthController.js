@@ -5,7 +5,11 @@ import DatabaseService from '../services/DatabaseService.js';
 class AuthController {
   constructor() {
     this.databaseService = new DatabaseService();
-    this.jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+    // Don't cache JWT_SECRET - read it fresh each time
+  }
+
+  getJwtSecret() {
+    return process.env.JWT_SECRET || 'your-secret-key';
   }
 
   async login(req, res) {
@@ -46,7 +50,7 @@ class AuthController {
           username: user.email, 
           role: 'admin' 
         },
-        this.jwtSecret,
+        this.getJwtSecret(),
         { expiresIn: '24h' }
       );
 
@@ -106,7 +110,7 @@ class AuthController {
           username: user.username, 
           role: user.role 
         },
-        this.jwtSecret,
+        this.getJwtSecret(),
         { expiresIn: '24h' }
       );
 
