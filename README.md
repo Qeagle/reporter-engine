@@ -398,7 +398,7 @@ curl -X POST http://localhost:3001/api/invitations/create \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer <admin-token>" \
   -d '{
-    "email": "mahesh.peddyakudi@company.com",
+    "email": "john.doe@company.com",
     "projectId": 1,
     "projectRoleId": 2
   }'
@@ -410,7 +410,7 @@ curl -X POST http://localhost:3001/api/invitations/create \
   "success": true,
   "invitation": {
     "id": 1,
-    "email": "mahesh.peddyakudi@company.com",
+    "email": "john.doe@company.com",
     "token": "inv_abc123def456",
     "projectId": 1,
     "projectRoleId": 2,
@@ -438,7 +438,7 @@ curl -X POST http://localhost:3001/api/invitations/inv_abc123def456/accept \
   "user": {
     "id": 2,
     "name": "Mahesh Peddyakudi",
-    "email": "mahesh.peddyakudi@company.com",
+    "email": "john.doe@company.com",
     "role": "member"
   },
   "message": "Account created successfully"
